@@ -74,6 +74,8 @@ public slots:
     void fullScreenAction();
     void itemDoubleClickedAction(QTreeWidgetItem* current, int column);
     void deleteAction();
+    void editShowAction();
+    void fileShowAction();
     void fullJustifyAction();
     void indentAction();
     void italicAction();
@@ -90,6 +92,7 @@ public slots:
     void rightAction();
     void saveAction();
     void saveAsAction();
+    void sceneShowAction();
     void textChangedAction();
     void underlineAction();
 };
