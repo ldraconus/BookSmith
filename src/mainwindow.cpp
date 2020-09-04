@@ -50,6 +50,12 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(findChild<QTreeWidget*>("treeWidget"),    SIGNAL(currentItemChanged(QTreeWidgetItem*,QTreeWidgetItem*)), this, SLOT(currentItemChangedAction(QTreeWidgetItem*,QTreeWidgetItem*)));
     connect(findChild<QTreeWidget*>("treeWidget"),    SIGNAL(itemDoubleClicked(QTreeWidgetItem*,int)),               this, SLOT(itemDoubleClickedAction(QTreeWidgetItem*,int)));
 
+    connect(findChild<QMenu*>("menuFile"),  SIGNAL(aboutToShow()), this, SLOT(fileShowAction()));
+    connect(findChild<QMenu*>("menuScene"), SIGNAL(aboutToShow()), this, SLOT(sceneShowAction()));
+    connect(findChild<QMenu*>("menuEdit"),  SIGNAL(aboutToShow()), this, SLOT(editShowAction()));
+
+    QApplication::setWindowIcon(QIcon("./gfx/BookSmith.ico"));
+
     // [TODO] restore previous sizes
     QSplitter* splitter = findChild<QSplitter*>("splitter");
     QSize mainSize = size();
@@ -266,6 +272,52 @@ void MainWindow::deleteAction()
     parent->removeChild(current);
 }
 
+void MainWindow::editShowAction()
+{
+    static QAction* pasteAction = nullptr;
+    static QAction* boldAction = nullptr;
+    static QAction* italicAction = nullptr;
+    static QAction* underlineAction = nullptr;
+    static QAction* leftAction = nullptr;
+    static QAction* centerAction = nullptr;
+    static QAction* rightAction = nullptr;
+    static QAction* justifyAction = nullptr;
+    static QAction* outdentAction = nullptr;
+    static QTextEdit* text = nullptr;
+
+    if (!pasteAction) {
+        pasteAction = findChild<QAction*>("actionPaste");
+        boldAction = findChild<QAction*>("actionBold");
+        italicAction = findChild<QAction*>("actionItalic");
+        underlineAction = findChild<QAction*>("actionUnderline");
+        leftAction = findChild<QAction*>("actionLeft");
+        centerAction = findChild<QAction*>("actionCenter");
+        rightAction = findChild<QAction*>("actionRight");
+        justifyAction = findChild<QAction*>("actionJustify");
+        outdentAction = findChild<QAction*>("actionOutdent");
+        text = findChild<QTextEdit*>("textEdit");
+    }
+
+    QTextCursor cursor = text->textCursor();
+    QTextCharFormat is = cursor.charFormat();
+    QTextBlockFormat blk = cursor.blockFormat();
+    pasteAction->setEnabled(text->canPaste());
+    boldAction->setChecked(is.fontWeight() == QFont::Bold);
+    italicAction->setChecked(is.fontItalic());
+    underlineAction->setChecked(is.fontUnderline());
+    leftAction->setChecked(text->alignment() == Qt::AlignLeft);
+    centerAction->setChecked(text->alignment() == Qt::AlignCenter);
+    rightAction->setChecked(text->alignment() == Qt::AlignRight);
+    justifyAction->setChecked(text->alignment() == Qt::AlignJustify);
+    outdentAction->setEnabled(blk.indent() != 0);
+}
+
+void MainWindow::fileShowAction()
+{
+    QAction* saveAction = findChild<QAction*>("actionSave");
+    saveAction->setEnabled(_dirty);
+}
+
 void MainWindow::fullJustifyAction()
 {
     QTextEdit* text = findChild<QTextEdit*>("textEdit");
@@ -321,7 +373,7 @@ void MainWindow::italicAction()
 
 void MainWindow::itemDoubleClickedAction(QTreeWidgetItem* current, int column)
 {
-    column = column;
+    column = (int) (double) column;
     int currentIdx = current->data(0, Qt::ItemDataRole::UserRole).toInt();
     Scene& currentScene = _scenes[currentIdx];
 
@@ -544,6 +596,33 @@ void MainWindow::saveAction()
 void MainWindow::saveAsAction()
 {
     saveAs();
+}
+
+void MainWindow::sceneShowAction()
+{
+    static QAction* deleteAction = nullptr;
+    static QAction* moveUpAction = nullptr;
+    static QAction* moveDownAction = nullptr;
+    static QAction* moveInAction = nullptr;
+    static QAction* moveOutAction = nullptr;
+    static QTreeWidget* tree = nullptr;
+
+    if (!deleteAction) {
+        deleteAction = findChild<QAction*>("actionDelete");
+        moveUpAction = findChild<QAction*>("actionMove_Up");
+        moveDownAction = findChild<QAction*>("actionMove_Down");
+        moveInAction = findChild<QAction*>("actionMove_In");
+        moveOutAction = findChild<QAction*>("actionMove_Out");
+        tree = findChild<QTreeWidget*>("treeWidget");
+    }
+
+    QTreeWidgetItem* current = tree->currentItem();
+    QTreeWidgetItem* parent = current->parent();
+    deleteAction->setEnabled(parent != nullptr);
+    moveUpAction->setEnabled(parent != nullptr && parent->indexOfChild(current) != 0);
+    moveDownAction->setEnabled(parent != nullptr && parent->indexOfChild(current) != parent->childCount() - 1);
+    moveInAction->setEnabled(parent != nullptr && parent->indexOfChild(current) != 0);
+    moveOutAction->setEnabled(parent != nullptr && parent->parent() != nullptr);
 }
 
 static int countWords(QString x)
