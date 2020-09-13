@@ -1,6 +1,8 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
+#include "finddialog.h"
+
 #include <QMainWindow>
 #include <QResizeEvent>
 #include <QCloseEvent>
@@ -37,14 +39,57 @@ public:
     explicit MainWindow(QWidget* parent = 0);
     ~MainWindow();
 
+    void change() { _dirty = true; }
+
+    QList<int> getChildren(int idx);
+    QTreeWidgetItem* getItemByIndex(int idx);
+
     bool save();
     bool saveAs();
-    void change() { _dirty = true; }
+
+    int getParent(int idx);
 
     void closeEvent(QCloseEvent* event);
     void resizeEvent(QResizeEvent* event);
 
     static MainWindow* getMainWindow() { return _mainWindow; }
+
+    class Position {
+    private:
+        int _scene;
+        int _offset;
+
+    public:
+        Position(int s = -1, int o = -1): _scene(s), _offset(o) { }
+        Position(const Position& p): _scene(p._scene), _offset(p._offset) { }
+
+        Position& operator=(const Position& p) { if (this != &p) { _scene = p._scene; _offset = p._offset; } return *this; }
+
+        bool unset() { return _scene < 0 || _offset < 0; }
+
+        int scene(int s = -1) { if (s >= 0) _scene = s; return _scene; }
+        int offset(int o = -1) { if (o >= 0) _offset = o; return _offset; }
+
+        void nil() { _scene = _offset = -1; }
+    };
+
+    class Search {
+    private:
+        QString _look;
+        FindDialog::type _range;
+        bool _wrapped;
+        Position _current;
+        Position _start;
+        Position _stop;
+
+    public:
+        Search(QString& l, FindDialog::type r);
+
+        Position findNext();
+        Position findNextChild(Position current);
+
+        void current(Position& f) { _current = f; }
+    };
 
 private:
     Ui::MainWindow* ui;
@@ -57,6 +102,7 @@ private:
     int _totalWc;
 
     bool checkClose();
+    void updateSceneWithEdits();
     QJsonObject sceneToObject(const Scene& scene);
     QJsonObject itemToObject(const QTreeWidgetItem* scene);
     Scene objectToScene(const QJsonObject& obj);
@@ -76,6 +122,7 @@ public slots:
     void deleteAction();
     void editShowAction();
     void fileShowAction();
+    void findAction();
     void fullJustifyAction();
     void indentAction();
     void italicAction();
@@ -89,6 +136,7 @@ public slots:
     void newSceneAction();
     void openAction();
     void pasteAction();
+    void replaceAction();
     void rightAction();
     void saveAction();
     void saveAsAction();
