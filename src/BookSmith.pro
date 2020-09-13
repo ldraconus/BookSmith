@@ -14,16 +14,19 @@ TEMPLATE = app
 CONFIG += c++14
 
 SOURCES += main.cpp\
+    finddialog.cpp \
         mainwindow.cpp \
     util.cpp \
     fullscreen.cpp \
     tagsdialog.cpp
 
 HEADERS  += mainwindow.h \
+    finddialog.h \
     util.h \
     fullscreen.h \
     tagsdialog.h
 
 FORMS    += mainwindow.ui \
+    finddialog.ui \
     fullscreen.ui \
     tagsdialog.ui

@@ -1,6 +1,7 @@
 #include "mainwindow.h"
 #include "fullscreen.h"
 #include "tagsdialog.h"
+#include "finddialog.h"
 #include "ui_mainwindow.h"
 #include "util.h"
 
@@ -13,6 +14,115 @@
 #include <QJsonObject>
 
 MainWindow* MainWindow::_mainWindow = nullptr;
+
+MainWindow::Search::Search(QString& l, FindDialog::type r): _look(l), _range(r), _wrapped(false)
+{
+    QTreeWidget* tree = MainWindow::_mainWindow->findChild<QTreeWidget*>("treeWidget");
+    QTreeWidgetItem* current = tree->currentItem();
+    int currentIdx = current->data(0, Qt::ItemDataRole::UserRole).toInt();
+
+    switch (_range) {
+    case FindDialog::Selection:
+        {
+            QTextEdit* text = MainWindow::_mainWindow->findChild<QTextEdit*>("textEdit");
+            QTextCursor cursor = text->textCursor();
+            int offset = cursor.selectionStart();
+            int end = cursor.selectionEnd();
+            _start.nil();
+            _start.scene(currentIdx);
+            _start.offset(offset);
+            _stop.scene(currentIdx);
+            _stop.offset(end);
+        }
+        break;
+    case FindDialog::Scene:
+    case FindDialog::SceneChildren:
+        _start.nil();
+        _start.scene(currentIdx);
+        break;
+    case FindDialog::SiblingChildren:
+        {
+            QTreeWidgetItem* parent = current->parent();
+            int parentIdx = parent->data(0, Qt::ItemDataRole::UserRole).toInt();
+            QList<int> children = MainWindow::_mainWindow->getChildren(parentIdx);
+            _start.nil();
+            _start.scene(children[0]);
+        }
+        break;
+    case FindDialog::All:
+        {
+            QTreeWidgetItem* root = tree->topLevelItem(0);
+            int rootIdx = root->data(0, Qt::ItemDataRole::UserRole).toInt();
+            _start.nil();
+            _start.scene(rootIdx);
+        }
+        break;
+    }
+
+    _current = _start;
+}
+
+MainWindow::Position MainWindow::Search::findNextChild(Position current)
+{
+    int at = current.scene();
+    QList<int> children = MainWindow::_mainWindow->getChildren(at);
+    if (children.count() != 0) return Position(children[0]);
+    int parentIdx = MainWindow::_mainWindow->getParent(at);
+    children = MainWindow::_mainWindow->getChildren(parentIdx);
+    int cnt = children.count() - 1;
+    for (int x = 0; x < cnt; ++x) if (x == at) return Position(children[x + 1]);
+    return Position();
+}
+
+MainWindow::Position MainWindow::Search::findNext()
+{
+    QTextEdit work;
+    int idx = _current.scene();
+    int offset = _current.offset();
+    Scene& scene = MainWindow::_mainWindow->_scenes[idx];
+    _current.nil();
+    work.setHtml(scene._doc);
+    for (; ; ) {
+        int start = offset + 1;
+        QString txt = work.toPlainText();
+        int at = txt.indexOf(_look, start);
+        if (at == -1) { // nothing left in this scene, get the next scene (if any)
+            switch (_range) {
+            case FindDialog::Selection:
+            case FindDialog::Scene:
+                return Position();
+            case FindDialog::SceneChildren:
+                {
+                    Position next = findNextChild(Position(idx));
+                    while (next.unset()) {
+                        if (idx == _start.scene()) return Position();
+                        idx = MainWindow::_mainWindow->getParent(idx);
+                        next = findNextChild(Position(idx));
+                    }
+                }
+                break;
+            case FindDialog::SiblingChildren:
+            case FindDialog::All:
+                {
+                    int parentIdx = MainWindow::_mainWindow->getParent(_start.scene());
+                    Position next = findNextChild(idx);
+                    while (next.unset()) {
+                        if (idx == parentIdx) return Position();
+                        idx = MainWindow::_mainWindow->getParent(idx);
+                        next = findNextChild(Position(idx));
+                    }
+                }
+                break;
+            }
+        }
+        else {
+            if (_range == FindDialog::Selection) {
+                if (at > _stop.offset() - _look.count() + 1) return Position();
+            }
+            return Position(idx, at);
+        }
+    }
+}
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -37,6 +147,8 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(findChild<QAction*>("actionCut"),         SIGNAL(triggered()),                                           this, SLOT(cutAction()));
     connect(findChild<QAction*>("actionCopy"),        SIGNAL(triggered()),                                           this, SLOT(copyAction()));
     connect(findChild<QAction*>("actionPaste"),       SIGNAL(triggered()),                                           this, SLOT(pasteAction()));
+    connect(findChild<QAction*>("actionFind"),        SIGNAL(triggered()),                                           this, SLOT(findAction()));
+    connect(findChild<QAction*>("actionReplace"),     SIGNAL(triggered()),                                           this, SLOT(replaceAction()));
     connect(findChild<QAction*>("actionBold"),        SIGNAL(triggered()),                                           this, SLOT(boldAction()));
     connect(findChild<QAction*>("actionItalic"),      SIGNAL(triggered()),                                           this, SLOT(italicAction()));
     connect(findChild<QAction*>("actionUnderline"),   SIGNAL(triggered()),                                           this, SLOT(underlineAction()));
@@ -85,6 +197,37 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
+static QTreeWidgetItem* getItemByItemIndex(QTreeWidgetItem* item, int idx)
+{
+    if (item->data(0, Qt::ItemDataRole::UserRole).toInt() == idx) return item;
+    int count = item->childCount();
+    for (int i = 0; i < count; ++i) if (getItemByItemIndex(item->child(i), idx)) return item->child(i);
+    return nullptr;
+}
+
+QTreeWidgetItem* MainWindow::getItemByIndex(int idx)
+{
+    QTreeWidget* tree = findChild<QTreeWidget*>("treeWidget");
+    QTreeWidgetItem* root = tree->topLevelItem(0);
+    return getItemByItemIndex(root, idx);
+}
+
+QList<int> MainWindow::getChildren(int idx)
+{
+    QList<int> children;
+    QTreeWidgetItem* item = getItemByIndex(idx);
+    int count = item->childCount();
+    for (int i = 0; i < count; ++i) children.append(item->child(i)->data(0, Qt::ItemDataRole::UserRole).toInt());
+    return children;
+}
+
+int MainWindow::getParent(int idx)
+{
+    QTreeWidgetItem* item = getItemByIndex(idx);
+    QTreeWidgetItem* parent = item->parent();
+    return parent->data(0, Qt::ItemDataRole::UserRole).toInt();
+}
+
 QJsonObject MainWindow::sceneToObject(const Scene& scene)
 {
 
@@ -114,16 +257,9 @@ bool MainWindow::save()
 {
     if (_scenes[0]._name == "<unnamed>") if (!saveAs()) return false;
 
-    QTextEdit* text = findChild<QTextEdit*>("textEdit");
-    QTreeWidget* tree = findChild<QTreeWidget*>("treeWidget");
-    QTreeWidgetItem* current = tree->currentItem();
-    int currentIdx = -1;
-    if (current) currentIdx = current->data(0, Qt::ItemDataRole::UserRole).toInt();
-        if (currentIdx < _scenes.size()) {
-            Scene& currentScene = _scenes[currentIdx];
-            if (current && !currentScene._root) currentScene._doc = text->toHtml();
-        }
+    updateSceneWithEdits();
 
+    QTreeWidget* tree = findChild<QTreeWidget*>("treeWidget");
     QJsonObject root;
     QTreeWidgetItem* rootItem = tree->topLevelItem(0);
     root.insert("root", itemToObject(rootItem));
@@ -316,6 +452,86 @@ void MainWindow::fileShowAction()
 {
     QAction* saveAction = findChild<QAction*>("actionSave");
     saveAction->setEnabled(_dirty);
+}
+
+void MainWindow::updateSceneWithEdits()
+{
+    QTextEdit* text = findChild<QTextEdit*>("textEdit");
+    QTreeWidget* tree = findChild<QTreeWidget*>("treeWidget");
+    QTreeWidgetItem* current = tree->currentItem();
+    int currentIdx = -1;
+    if (current) currentIdx = current->data(0, Qt::ItemDataRole::UserRole).toInt();
+        if (currentIdx < _scenes.size()) {
+            Scene& currentScene = _scenes[currentIdx];
+            if (current && !currentScene._root) currentScene._doc = text->toHtml();
+        }
+}
+
+
+void MainWindow::findAction()
+{
+    QTextEdit* text = findChild<QTextEdit*>("textEdit");
+    QTextCursor cursor = text->textCursor();
+    updateSceneWithEdits();
+
+    FindDialog find(cursor.hasSelection());
+    find.show();
+
+    if (!find.exec()) return;
+
+    QString look = find.getSearchString();
+    FindDialog::type searchRange = find.getType();
+    if (look.isEmpty()) return;
+
+    Search request(look, searchRange);
+
+    QTextCursor oldCursor = text->textCursor();
+    QTextCursor noSelection = oldCursor;
+    noSelection.setPosition(oldCursor.position());
+    text->setTextCursor(noSelection);
+
+    QColor pen(QColorConstants::Svg::white);
+    QColor back(QColorConstants::Svg::blue);
+    QColor normalPen(QColorConstants::Svg::black);
+    QColor normalBack(QColorConstants::Svg::white);
+
+    for (; ; ) {
+        MainWindow::Position found = request.findNext();
+        if (found.unset()) {
+            Util::OK("Search complete");
+            return;
+        }
+
+        request.current(found);
+
+        QTreeWidgetItem* item = getItemByIndex(found.scene());
+        QTreeWidget* tree = findChild<QTreeWidget*>("treeWidget");
+        if (tree->currentItem() != item) tree->setCurrentItem(item);
+
+        cursor.setPosition(found.offset());
+        cursor.movePosition(QTextCursor::MoveOperation::NextCharacter, QTextCursor::MoveMode::KeepAnchor, look.size());
+
+        QTextCharFormat format = text->currentCharFormat();
+        format.setBackground(back);
+        format.setForeground(pen);
+        text->setTextCursor(cursor);
+        text->ensureCursorVisible();
+        text->repaint();
+        text->mergeCurrentCharFormat(format);
+        text->setTextCursor(noSelection);
+        text->repaint();
+
+        int result = Util::YesNo("Continue Search?");
+
+        format.setBackground(normalBack);
+        format.setForeground(normalPen);
+        text->setTextCursor(cursor);
+        text->mergeCurrentCharFormat(format);
+        text->setTextCursor(noSelection);
+        text->repaint();
+
+        if (result == QMessageBox::No) return;
+    }
 }
 
 void MainWindow::fullJustifyAction()
@@ -579,6 +795,31 @@ void MainWindow::pasteAction()
         postCursor.setBlockFormat(blk);
         text->setTextCursor(postCursor);
     }
+}
+
+void MainWindow::replaceAction()
+{
+    // display replace dialog
+    // if canceled: return
+    // get what to find
+    // get replacement
+    // get search range
+    // fill out find request
+    // do:
+    //   call findNext with request
+    //   if done:
+    //     show done msg
+    //     return
+    //   if replacingAll:
+    //     replace text
+    //     continue
+    //   highlight find
+    //   show replacement dialog
+    //   remove highlight
+    //   if cancelled: return
+    //   else if replace it or replace all:
+    //     replace text
+    //     if replace all: replaceAll is true
 }
 
 void MainWindow::rightAction()
