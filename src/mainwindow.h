@@ -65,7 +65,7 @@ public:
 
         Position& operator=(const Position& p) { if (this != &p) { _scene = p._scene; _offset = p._offset; } return *this; }
 
-        bool unset() { return _scene < 0 || _offset < 0; }
+        bool unset() { return _scene == -1 && _offset == -1; }
 
         int scene(int s = -1) { if (s >= 0) _scene = s; return _scene; }
         int offset(int o = -1) { if (o >= 0) _offset = o; return _offset; }
@@ -75,6 +75,7 @@ public:
 
     class Search {
     private:
+        QList<int> _stack;
         QString _look;
         FindDialog::type _range;
         bool _wrapped;
