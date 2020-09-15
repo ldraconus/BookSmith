@@ -17,6 +17,7 @@ MainWindow* MainWindow::_mainWindow = nullptr;
 
 MainWindow::Search::Search(QString& l, FindDialog::type r): _look(l), _range(r), _wrapped(false)
 {
+    _stack.clear();
     QTreeWidget* tree = MainWindow::_mainWindow->findChild<QTreeWidget*>("treeWidget");
     QTreeWidgetItem* current = tree->currentItem();
     int currentIdx = current->data(0, Qt::ItemDataRole::UserRole).toInt();
@@ -60,17 +61,32 @@ MainWindow::Search::Search(QString& l, FindDialog::type r): _look(l), _range(r),
     }
 
     _current = _start;
+    _stack.append(_current.scene());
 }
 
 MainWindow::Position MainWindow::Search::findNextChild(Position current)
 {
     int at = current.scene();
     QList<int> children = MainWindow::_mainWindow->getChildren(at);
-    if (children.count() != 0) return Position(children[0]);
-    int parentIdx = MainWindow::_mainWindow->getParent(at);
-    children = MainWindow::_mainWindow->getChildren(parentIdx);
-    int cnt = children.count() - 1;
-    for (int x = 0; x < cnt; ++x) if (x == at) return Position(children[x + 1]);
+    if (!children.isEmpty()) {
+        _stack.append(children[0]);
+        return Position(children[0]);
+    }
+
+    _stack.pop_back();
+
+    while (!_stack.isEmpty()) {
+        int parentIdx = MainWindow::_mainWindow->getParent(at);
+        children = MainWindow::_mainWindow->getChildren(parentIdx);
+        int cnt = children.count() - 1;
+        for (int x = 0; x < cnt; ++x) if (children[x] == at) {
+            _stack.append(children[x + 1]);
+            return Position(children[x + 1]);
+        }
+        at = _stack.last();
+        _stack.pop_back();
+    }
+
     return Position();
 }
 
@@ -92,25 +108,15 @@ MainWindow::Position MainWindow::Search::findNext()
             case FindDialog::Scene:
                 return Position();
             case FindDialog::SceneChildren:
-                {
-                    Position next = findNextChild(Position(idx));
-                    while (next.unset()) {
-                        if (idx == _start.scene()) return Position();
-                        idx = MainWindow::_mainWindow->getParent(idx);
-                        next = findNextChild(Position(idx));
-                    }
-                }
-                break;
             case FindDialog::SiblingChildren:
             case FindDialog::All:
                 {
-                    int parentIdx = MainWindow::_mainWindow->getParent(_start.scene());
-                    Position next = findNextChild(idx);
-                    while (next.unset()) {
-                        if (idx == parentIdx) return Position();
-                        idx = MainWindow::_mainWindow->getParent(idx);
-                        next = findNextChild(Position(idx));
-                    }
+                    Position next = findNextChild(Position(idx));
+                    if (next.unset()) return Position();
+                    idx = next.scene();
+                    Scene& scene = MainWindow::_mainWindow->_scenes[idx];
+                    work.setHtml(scene._doc);
+                    offset = -1;
                 }
                 break;
             }
@@ -201,7 +207,10 @@ static QTreeWidgetItem* getItemByItemIndex(QTreeWidgetItem* item, int idx)
 {
     if (item->data(0, Qt::ItemDataRole::UserRole).toInt() == idx) return item;
     int count = item->childCount();
-    for (int i = 0; i < count; ++i) if (getItemByItemIndex(item->child(i), idx)) return item->child(i);
+    for (int i = 0; i < count; ++i) {
+        QTreeWidgetItem* found = getItemByItemIndex(item->child(i), idx);
+        if (found) return found;
+    }
     return nullptr;
 }
 
@@ -255,13 +264,14 @@ QJsonObject MainWindow::itemToObject(const QTreeWidgetItem* scene)
 
 bool MainWindow::save()
 {
-    if (_scenes[0]._name == "<unnamed>") if (!saveAs()) return false;
+    QTreeWidget* tree = findChild<QTreeWidget*>("treeWidget");
+    QTreeWidgetItem* rootItem = tree->topLevelItem(0);
+    int idx = rootItem->data(0, Qt::ItemDataRole::UserRole).toInt();
+    if (_scenes[idx]._name == "") if (!saveAs()) return false;
 
     updateSceneWithEdits();
 
-    QTreeWidget* tree = findChild<QTreeWidget*>("treeWidget");
     QJsonObject root;
-    QTreeWidgetItem* rootItem = tree->topLevelItem(0);
     root.insert("root", itemToObject(rootItem));
     QJsonObject top;
     top.insert("document", root);
@@ -287,7 +297,11 @@ bool MainWindow::saveAs()
         _dir = filename.left(sep + 1);
         filename = filename.mid(sep + 1);
     }
-    _scenes[0]._name = filename;
+
+    QTreeWidget* tree = findChild<QTreeWidget*>("treeWidget");
+    QTreeWidgetItem* rootItem = tree->topLevelItem(0);
+    int idx = rootItem->data(0, Qt::ItemDataRole::UserRole).toInt();
+    _scenes[idx]._name = filename;
     return true;
 }
 
@@ -495,11 +509,13 @@ void MainWindow::findAction()
     QColor normalPen(QColorConstants::Svg::black);
     QColor normalBack(QColorConstants::Svg::white);
 
+    bool savedDirty = _dirty;
+
     for (; ; ) {
         MainWindow::Position found = request.findNext();
         if (found.unset()) {
-            Util::OK("Search complete");
-            return;
+            Util::OK("Search complete", "Nothing more found");
+            break;
         }
 
         request.current(found);
@@ -521,7 +537,7 @@ void MainWindow::findAction()
         text->setTextCursor(noSelection);
         text->repaint();
 
-        int result = Util::YesNo("Continue Search?");
+        int result = Util::YesNo("Continue Search?", "Find successful");
 
         format.setBackground(normalBack);
         format.setForeground(normalPen);
@@ -530,8 +546,9 @@ void MainWindow::findAction()
         text->setTextCursor(noSelection);
         text->repaint();
 
-        if (result == QMessageBox::No) return;
+        if (result == QMessageBox::No) break;
     }
+    _dirty = savedDirty;
 }
 
 void MainWindow::fullJustifyAction()
@@ -717,7 +734,7 @@ QTreeWidgetItem* MainWindow::objectToItem(const QJsonObject& obj, int& total)
 {
     Scene scene = objectToScene(obj);
     total += scene._wc;
-    QTreeWidgetItem* item = new QTreeWidgetItem(static_cast<QTreeWidgetItem*>(nullptr), QStringList(scene._name));
+    QTreeWidgetItem* item = new QTreeWidgetItem(static_cast<QTreeWidgetItem*>(nullptr), QStringList(scene._name.isEmpty() ? "<unnamed>" : scene._name));
     const QJsonArray& children = obj["children"].toArray();
     for (auto child: children) item->addChild(objectToItem(child.toObject(), total));
     item->setData(0, Qt::ItemDataRole::UserRole, QVariant(this->_scenes.size()));
@@ -758,7 +775,6 @@ void MainWindow::openAction()
     const QJsonObject& top = json.object();
     if (!top.contains("document")) return;
 
-    _dirty = false;
     const QJsonObject& doc = top["document"].toObject();
     const QJsonObject& root = doc["root"].toObject();
     tree->clear();
