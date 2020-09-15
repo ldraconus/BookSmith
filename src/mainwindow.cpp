@@ -271,6 +271,7 @@ bool MainWindow::save()
 
     updateSceneWithEdits();
 
+    QTreeWidget* tree = findChild<QTreeWidget*>("treeWidget");
     QJsonObject root;
     root.insert("root", itemToObject(rootItem));
     QJsonObject top;
