@@ -172,6 +172,15 @@
    <property name="movable">
     <bool>false</bool>
    </property>
+   <property name="allowedAreas">
+    <set>Qt::TopToolBarArea</set>
+   </property>
+   <property name="iconSize">
+    <size>
+     <width>16</width>
+     <height>16</height>
+    </size>
+   </property>
    <property name="floatable">
     <bool>false</bool>
    </property>
@@ -184,6 +193,10 @@
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
   <action name="actionOpen">
+   <property name="icon">
+    <iconset>
+     <normaloff>../build-BookSmith-Desktop_Qt_5_15_0_MSVC2019_64bit-Release/gfx/folder-3-16.ico</normaloff>../build-BookSmith-Desktop_Qt_5_15_0_MSVC2019_64bit-Release/gfx/folder-3-16.ico</iconset>
+   </property>
    <property name="text">
     <string>Open</string>
    </property>
@@ -192,6 +205,10 @@
    </property>
   </action>
   <action name="actionNew">
+   <property name="icon">
+    <iconset>
+     <normaloff>../build-BookSmith-Desktop_Qt_5_15_0_MSVC2019_64bit-Release/gfx/blank-file-16.ico</normaloff>../build-BookSmith-Desktop_Qt_5_15_0_MSVC2019_64bit-Release/gfx/blank-file-16.ico</iconset>
+   </property>
    <property name="text">
     <string>New</string>
    </property>
@@ -245,6 +262,10 @@
    </property>
   </action>
   <action name="actionSave">
+   <property name="icon">
+    <iconset>
+     <normaloff>../build-BookSmith-Desktop_Qt_5_15_0_MSVC2019_64bit-Release/gfx/downloads-16.ico</normaloff>../build-BookSmith-Desktop_Qt_5_15_0_MSVC2019_64bit-Release/gfx/downloads-16.ico</iconset>
+   </property>
    <property name="text">
     <string>Save</string>
    </property>
@@ -253,6 +274,10 @@
    </property>
   </action>
   <action name="actionFull_Screen">
+   <property name="icon">
+    <iconset>
+     <normaloff>../build-BookSmith-Desktop_Qt_5_15_0_MSVC2019_64bit-Release/gfx/fullscreen_16.ico</normaloff>../build-BookSmith-Desktop_Qt_5_15_0_MSVC2019_64bit-Release/gfx/fullscreen_16.ico</iconset>
+   </property>
    <property name="text">
     <string>Full Screen</string>
    </property>
@@ -349,6 +374,10 @@
    <property name="checkable">
     <bool>true</bool>
    </property>
+   <property name="icon">
+    <iconset>
+     <normaloff>../build-BookSmith-Desktop_Qt_5_15_0_MSVC2019_64bit-Release/gfx/bold-16.ico</normaloff>../build-BookSmith-Desktop_Qt_5_15_0_MSVC2019_64bit-Release/gfx/bold-16.ico</iconset>
+   </property>
    <property name="text">
     <string>Bold</string>
    </property>
@@ -360,6 +389,10 @@
    <property name="checkable">
     <bool>true</bool>
    </property>
+   <property name="icon">
+    <iconset>
+     <normaloff>../build-BookSmith-Desktop_Qt_5_15_0_MSVC2019_64bit-Release/gfx/italic-16.ico</normaloff>../build-BookSmith-Desktop_Qt_5_15_0_MSVC2019_64bit-Release/gfx/italic-16.ico</iconset>
+   </property>
    <property name="text">
     <string>Italic</string>
    </property>
@@ -370,6 +403,10 @@
   <action name="actionUnderline">
    <property name="checkable">
     <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset>
+     <normaloff>../build-BookSmith-Desktop_Qt_5_15_0_MSVC2019_64bit-Release/gfx/Icons8-Windows-8-Editing-Underline.ico</normaloff>../build-BookSmith-Desktop_Qt_5_15_0_MSVC2019_64bit-Release/gfx/Icons8-Windows-8-Editing-Underline.ico</iconset>
    </property>
    <property name="text">
     <string>Underline</string>
@@ -387,6 +424,10 @@
    <property name="checkable">
     <bool>true</bool>
    </property>
+   <property name="icon">
+    <iconset>
+     <normaloff>../build-BookSmith-Desktop_Qt_5_15_0_MSVC2019_64bit-Release/gfx/alignment+center+text+icon_16.ico</normaloff>../build-BookSmith-Desktop_Qt_5_15_0_MSVC2019_64bit-Release/gfx/alignment+center+text+icon_16.ico</iconset>
+   </property>
    <property name="text">
     <string>Center</string>
    </property>
@@ -397,6 +438,10 @@
   <action name="actionLeft">
    <property name="checkable">
     <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset>
+     <normaloff>../build-BookSmith-Desktop_Qt_5_15_0_MSVC2019_64bit-Release/gfx/alignment+left+text+icon_16.ico</normaloff>../build-BookSmith-Desktop_Qt_5_15_0_MSVC2019_64bit-Release/gfx/alignment+left+text+icon_16.ico</iconset>
    </property>
    <property name="text">
     <string>Left</string>
@@ -409,6 +454,10 @@
    <property name="checkable">
     <bool>true</bool>
    </property>
+   <property name="icon">
+    <iconset>
+     <normaloff>../build-BookSmith-Desktop_Qt_5_15_0_MSVC2019_64bit-Release/gfx/alignment+right+text+icon_16.ico</normaloff>../build-BookSmith-Desktop_Qt_5_15_0_MSVC2019_64bit-Release/gfx/alignment+right+text+icon_16.ico</iconset>
+   </property>
    <property name="text">
     <string>Right</string>
    </property>
@@ -419,6 +468,10 @@
   <action name="actionJustify">
    <property name="checkable">
     <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset>
+     <normaloff>../build-BookSmith-Desktop_Qt_5_15_0_MSVC2019_64bit-Release/gfx/alignment+justify+text+icon_16.ico</normaloff>../build-BookSmith-Desktop_Qt_5_15_0_MSVC2019_64bit-Release/gfx/alignment+justify+text+icon_16.ico</iconset>
    </property>
    <property name="text">
     <string>Justify</string>
@@ -431,6 +484,10 @@
    <property name="checkable">
     <bool>false</bool>
    </property>
+   <property name="icon">
+    <iconset>
+     <normaloff>../build-BookSmith-Desktop_Qt_5_15_0_MSVC2019_64bit-Release/gfx/format+indent+increase_16.ico</normaloff>../build-BookSmith-Desktop_Qt_5_15_0_MSVC2019_64bit-Release/gfx/format+indent+increase_16.ico</iconset>
+   </property>
    <property name="text">
     <string>Indent</string>
    </property>
@@ -439,6 +496,10 @@
    </property>
   </action>
   <action name="actionOutdent">
+   <property name="icon">
+    <iconset>
+     <normaloff>../build-BookSmith-Desktop_Qt_5_15_0_MSVC2019_64bit-Release/gfx/format+indent+decrease16.ico</normaloff>../build-BookSmith-Desktop_Qt_5_15_0_MSVC2019_64bit-Release/gfx/format+indent+decrease16.ico</iconset>
+   </property>
    <property name="text">
     <string>Outdent</string>
    </property>

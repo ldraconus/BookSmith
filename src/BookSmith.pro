@@ -11,17 +11,19 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 TARGET = BookSmith
 TEMPLATE = app
 
-CONFIG += c++14
+CONFIG += c++14 embed_manifest_exe
 
 SOURCES += main.cpp\
     finddialog.cpp \
         mainwindow.cpp \
+    replacedialog.cpp \
     util.cpp \
     fullscreen.cpp \
     tagsdialog.cpp
 
 HEADERS  += mainwindow.h \
     finddialog.h \
+    replacedialog.h \
     util.h \
     fullscreen.h \
     tagsdialog.h
@@ -29,4 +31,5 @@ HEADERS  += mainwindow.h \
 FORMS    += mainwindow.ui \
     finddialog.ui \
     fullscreen.ui \
+    replacedialog.ui \
     tagsdialog.ui

@@ -11,6 +11,7 @@
 #include <QTextDocument>
 #include <QTreeWidgetItem>
 #include <QLabel>
+#include <QToolBar>
 
 class Scene {
 private:
@@ -36,21 +37,42 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 
 public:
-    explicit MainWindow(QWidget* parent = 0);
+    struct Fullscreen {
+        QList<int> sizes;
+        QList<int> sizes_2;
+    };
+
+    struct Dialog {
+        int top;
+        int left;
+    };
+
+    explicit MainWindow(const QString& file, QWidget* parent = 0);
     ~MainWindow();
 
     void change() { _dirty = true; }
-
     QList<int> getChildren(int idx);
     QTreeWidgetItem* getItemByIndex(int idx);
 
     bool save();
     bool saveAs();
+    bool open(const QString& filename);
 
     int getParent(int idx);
 
     void closeEvent(QCloseEvent* event);
+    void createToolBarItem(QToolBar* tb, const QString& icon, const QString& name, const QString& tip, const char* signal, const char* slot);
     void resizeEvent(QResizeEvent* event);
+
+    struct Fullscreen& fullscreen() { return _fullscreen; }
+    struct Dialog& finddialog()     { return _finddialog; }
+    struct Dialog& replacedialog()  { return _replacedialog; }
+    struct Dialog& tagdialog()      { return _tagdialog; }
+    struct Dialog& ok()             { return _ok; }
+    struct Dialog& okcancel()       { return _okcancel; }
+    struct Dialog& yesno()          { return _yesno; }
+    struct Dialog& yesnocancel()    { return _yesnocancel; }
+    struct Dialog& question()       { return _question; }
 
     static MainWindow* getMainWindow() { return _mainWindow; }
 
@@ -77,14 +99,18 @@ public:
     private:
         QList<int> _stack;
         QString _look;
+        QString _with;
         FindDialog::type _range;
         bool _wrapped;
         Position _current;
         Position _start;
         Position _stop;
 
+        void init(FindDialog::type r);
+
     public:
         Search(QString& l, FindDialog::type r);
+        Search(QString& l, FindDialog::type r, QString& w);
 
         Position findNext();
         Position findNextChild(Position current);
@@ -101,6 +127,15 @@ private:
     QString _dir;
     int _dirty;
     int _totalWc;
+    Fullscreen _fullscreen;
+    Dialog _finddialog = { -1, -1 };
+    Dialog _replacedialog = { -1, -1 };
+    Dialog _tagdialog = { -1, -1 };
+    Dialog _ok = { -1, -1 };
+    Dialog _okcancel = { -1, -1 };
+    Dialog _yesno = { -1, -1 };
+    Dialog _yesnocancel = { -1, -1 };
+    Dialog _question = { -1, -1 };
 
     bool checkClose();
     void updateSceneWithEdits();
