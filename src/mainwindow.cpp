@@ -2,6 +2,7 @@
 #include "fullscreen.h"
 #include "tagsdialog.h"
 #include "finddialog.h"
+#include "replacedialog.h"
 #include "ui_mainwindow.h"
 #include "util.h"
 
@@ -12,12 +13,14 @@
 #include <QJsonDocument>
 #include <QJsonArray>
 #include <QJsonObject>
+#include <QToolBar>
 
 MainWindow* MainWindow::_mainWindow = nullptr;
 
-MainWindow::Search::Search(QString& l, FindDialog::type r): _look(l), _range(r), _wrapped(false)
+void MainWindow::Search::init(FindDialog::type r)
 {
     _stack.clear();
+    _range = r;
     QTreeWidget* tree = MainWindow::_mainWindow->findChild<QTreeWidget*>("treeWidget");
     QTreeWidgetItem* current = tree->currentItem();
     int currentIdx = current->data(0, Qt::ItemDataRole::UserRole).toInt();
@@ -62,6 +65,17 @@ MainWindow::Search::Search(QString& l, FindDialog::type r): _look(l), _range(r),
 
     _current = _start;
     _stack.append(_current.scene());
+}
+
+
+MainWindow::Search::Search(QString& l, FindDialog::type r): _look(l), _with(""), _wrapped(false)
+{
+    init(r);
+}
+
+MainWindow::Search::Search(QString& l, FindDialog::type r, QString& w): _look(l), _with(w), _wrapped(false)
+{
+    init(r);
 }
 
 MainWindow::Position MainWindow::Search::findNextChild(Position current)
@@ -130,7 +144,14 @@ MainWindow::Position MainWindow::Search::findNext()
     }
 }
 
-MainWindow::MainWindow(QWidget *parent) :
+void MainWindow::createToolBarItem(QToolBar* tb, const QString& icon, const QString& name, const QString& tip, const char* signal, const char* slot)
+{
+    QAction* action = tb->addAction(QIcon(icon), name);
+    action->setToolTip(tip);
+    action->connect(action, signal, this, slot);
+}
+
+MainWindow::MainWindow(const QString& file, QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
@@ -138,35 +159,57 @@ MainWindow::MainWindow(QWidget *parent) :
     _mainWindow = this;
     _dirty = false;
 
-    connect(findChild<QAction*>("actionExit"),        SIGNAL(triggered()),                                           this, SLOT(checkAction()));
-    connect(findChild<QAction*>("actionFull_Screen"), SIGNAL(triggered()),                                           this, SLOT(fullScreenAction()));
-    connect(findChild<QAction*>("actionNew"),         SIGNAL(triggered()),                                           this, SLOT(newAction()));
-    connect(findChild<QAction*>("actionOpen"),        SIGNAL(triggered()),                                           this, SLOT(openAction()));
-    connect(findChild<QAction*>("actionSave"),        SIGNAL(triggered()),                                           this, SLOT(saveAction()));
-    connect(findChild<QAction*>("actionSave_As"),     SIGNAL(triggered()),                                           this, SLOT(saveAsAction()));
-    connect(findChild<QAction*>("actionNewScene"),    SIGNAL(triggered()),                                           this, SLOT(newSceneAction()));
-    connect(findChild<QAction*>("actionDelete"),      SIGNAL(triggered()),                                           this, SLOT(deleteAction()));
-    connect(findChild<QAction*>("actionMove_In"),     SIGNAL(triggered()),                                           this, SLOT(moveInAction()));
-    connect(findChild<QAction*>("actionMove_Out"),    SIGNAL(triggered()),                                           this, SLOT(moveOutAction()));
-    connect(findChild<QAction*>("actionMove_Up"),     SIGNAL(triggered()),                                           this, SLOT(moveUpAction()));
-    connect(findChild<QAction*>("actionMove_Down"),   SIGNAL(triggered()),                                           this, SLOT(moveDownAction()));
-    connect(findChild<QAction*>("actionCut"),         SIGNAL(triggered()),                                           this, SLOT(cutAction()));
-    connect(findChild<QAction*>("actionCopy"),        SIGNAL(triggered()),                                           this, SLOT(copyAction()));
-    connect(findChild<QAction*>("actionPaste"),       SIGNAL(triggered()),                                           this, SLOT(pasteAction()));
-    connect(findChild<QAction*>("actionFind"),        SIGNAL(triggered()),                                           this, SLOT(findAction()));
-    connect(findChild<QAction*>("actionReplace"),     SIGNAL(triggered()),                                           this, SLOT(replaceAction()));
-    connect(findChild<QAction*>("actionBold"),        SIGNAL(triggered()),                                           this, SLOT(boldAction()));
-    connect(findChild<QAction*>("actionItalic"),      SIGNAL(triggered()),                                           this, SLOT(italicAction()));
-    connect(findChild<QAction*>("actionUnderline"),   SIGNAL(triggered()),                                           this, SLOT(underlineAction()));
-    connect(findChild<QAction*>("actionLeft"),        SIGNAL(triggered()),                                           this, SLOT(leftAction()));
-    connect(findChild<QAction*>("actionCenter"),      SIGNAL(triggered()),                                           this, SLOT(centerAction()));
-    connect(findChild<QAction*>("actionRight"),       SIGNAL(triggered()),                                           this, SLOT(rightAction()));
-    connect(findChild<QAction*>("actionJustify"),     SIGNAL(triggered()),                                           this, SLOT(fullJustifyAction()));
-    connect(findChild<QAction*>("actionIndent"),      SIGNAL(triggered()),                                           this, SLOT(indentAction()));
-    connect(findChild<QAction*>("actionOutdent"),     SIGNAL(triggered()),                                           this, SLOT(outdentAction()));
-    connect(findChild<QTextEdit*>("textEdit"),        SIGNAL(textChanged()),                                         this, SLOT(textChangedAction()));
-    connect(findChild<QTreeWidget*>("treeWidget"),    SIGNAL(currentItemChanged(QTreeWidgetItem*,QTreeWidgetItem*)), this, SLOT(currentItemChangedAction(QTreeWidgetItem*,QTreeWidgetItem*)));
-    connect(findChild<QTreeWidget*>("treeWidget"),    SIGNAL(itemDoubleClicked(QTreeWidgetItem*,int)),               this, SLOT(itemDoubleClickedAction(QTreeWidgetItem*,int)));
+    // [TODO] set up toolbar
+    QToolBar* toolbar = findChild<QToolBar*>("mainToolBar");
+    createToolBarItem(toolbar, "./gfx/blank-file-16.ico",                      "New",        "New Book (Ctrl-N)",       SIGNAL(triggered()), SLOT(newAction()));
+    createToolBarItem(toolbar, "./gfx/folder-3-16.ico",                        "Open",       "Open Book (Ctrl-O)",      SIGNAL(triggered()), SLOT(openAction()));
+    createToolBarItem(toolbar, "./gfx/downloads-16.ico",                       "Save",       "Save Book (Ctrl-S)",      SIGNAL(triggered()), SLOT(saveAction()));
+    toolbar->addSeparator();
+    createToolBarItem(toolbar, "./gfx/bold-16.ico",                            "Bold",       "Bold Text (Ctrl-B)",      SIGNAL(triggered()), SLOT(boldAction()));
+    createToolBarItem(toolbar, "./gfx/italic-16.ico",                          "Italic",     "Italic Text (Ctrl-I)",    SIGNAL(triggered()), SLOT(italicAction()));
+    createToolBarItem(toolbar, "./gfx/Icons8-Windows-8-Editing-Underline.ico", "Underline",  "Underline Text (Ctrl-U)", SIGNAL(triggered()), SLOT(underlineAction()));
+    toolbar->addSeparator();
+    createToolBarItem(toolbar, "./gfx/alignment+left+text+icon_16.ico",        "Left",       "Left Text (Alt-L)",       SIGNAL(triggered()), SLOT(leftAction()));
+    createToolBarItem(toolbar, "./gfx/alignment+center+text+icon_16.ico",      "Center",     "Center Text (Alt-C)",     SIGNAL(triggered()), SLOT(centerAction()));
+    createToolBarItem(toolbar, "./gfx/alignment+right+text+icon_16.ico",       "Right",      "Right Text (Alt-R)",      SIGNAL(triggered()), SLOT(rightAction()));
+    createToolBarItem(toolbar, "./gfx/alignment+justify+text+icon_16.ico",     "Justify",    "Justify Text (Alt-J)",    SIGNAL(triggered()), SLOT(fullJustifyAction()));
+    toolbar->addSeparator();
+    createToolBarItem(toolbar, "./gfx/format+indent+increase_16.ico",          "Indent",     "Indent (Alt-])",          SIGNAL(triggered()), SLOT(indentAction()));
+    createToolBarItem(toolbar, "./gfx/format+indent+decrease16.ico",           "Outdent",    "Outdent (Alt-[)",         SIGNAL(triggered()), SLOT(outdentAction()));
+    toolbar->addSeparator();
+    createToolBarItem(toolbar, "./gfx/fullscreen_16.ico",                      "Fullscreen", "Full Screen (F11)",       SIGNAL(triggered()), SLOT(fullScreenAction()));
+
+    connect(findChild<QAction*>("actionExit"),        SIGNAL(triggered()), this, SLOT(checkAction()));
+    connect(findChild<QAction*>("actionFull_Screen"), SIGNAL(triggered()), this, SLOT(fullScreenAction()));
+    connect(findChild<QAction*>("actionNew"),         SIGNAL(triggered()), this, SLOT(newAction()));
+    connect(findChild<QAction*>("actionOpen"),        SIGNAL(triggered()), this, SLOT(openAction()));
+    connect(findChild<QAction*>("actionSave"),        SIGNAL(triggered()), this, SLOT(saveAction()));
+    connect(findChild<QAction*>("actionSave_As"),     SIGNAL(triggered()), this, SLOT(saveAsAction()));
+    connect(findChild<QAction*>("actionNewScene"),    SIGNAL(triggered()), this, SLOT(newSceneAction()));
+    connect(findChild<QAction*>("actionDelete"),      SIGNAL(triggered()), this, SLOT(deleteAction()));
+    connect(findChild<QAction*>("actionMove_In"),     SIGNAL(triggered()), this, SLOT(moveInAction()));
+    connect(findChild<QAction*>("actionMove_Out"),    SIGNAL(triggered()), this, SLOT(moveOutAction()));
+    connect(findChild<QAction*>("actionMove_Up"),     SIGNAL(triggered()), this, SLOT(moveUpAction()));
+    connect(findChild<QAction*>("actionMove_Down"),   SIGNAL(triggered()), this, SLOT(moveDownAction()));
+    connect(findChild<QAction*>("actionCut"),         SIGNAL(triggered()), this, SLOT(cutAction()));
+    connect(findChild<QAction*>("actionCopy"),        SIGNAL(triggered()), this, SLOT(copyAction()));
+    connect(findChild<QAction*>("actionPaste"),       SIGNAL(triggered()), this, SLOT(pasteAction()));
+    connect(findChild<QAction*>("actionFind"),        SIGNAL(triggered()), this, SLOT(findAction()));
+    connect(findChild<QAction*>("actionReplace"),     SIGNAL(triggered()), this, SLOT(replaceAction()));
+    connect(findChild<QAction*>("actionBold"),        SIGNAL(triggered()), this, SLOT(boldAction()));
+    connect(findChild<QAction*>("actionItalic"),      SIGNAL(triggered()), this, SLOT(italicAction()));
+    connect(findChild<QAction*>("actionUnderline"),   SIGNAL(triggered()), this, SLOT(underlineAction()));
+    connect(findChild<QAction*>("actionLeft"),        SIGNAL(triggered()), this, SLOT(leftAction()));
+    connect(findChild<QAction*>("actionCenter"),      SIGNAL(triggered()), this, SLOT(centerAction()));
+    connect(findChild<QAction*>("actionRight"),       SIGNAL(triggered()), this, SLOT(rightAction()));
+    connect(findChild<QAction*>("actionJustify"),     SIGNAL(triggered()), this, SLOT(fullJustifyAction()));
+    connect(findChild<QAction*>("actionIndent"),      SIGNAL(triggered()), this, SLOT(indentAction()));
+    connect(findChild<QAction*>("actionOutdent"),     SIGNAL(triggered()), this, SLOT(outdentAction()));
+
+    connect(findChild<QTreeWidget*>("treeWidget"), SIGNAL(currentItemChanged(QTreeWidgetItem*,QTreeWidgetItem*)), this, SLOT(currentItemChangedAction(QTreeWidgetItem*,QTreeWidgetItem*)));
+    connect(findChild<QTreeWidget*>("treeWidget"), SIGNAL(itemDoubleClicked(QTreeWidgetItem*,int)),               this, SLOT(itemDoubleClickedAction(QTreeWidgetItem*,int)));
+
+    connect(findChild<QTextEdit*>("textEdit"), SIGNAL(textChanged()), this, SLOT(textChangedAction()));
 
     connect(findChild<QMenu*>("menuFile"),  SIGNAL(aboutToShow()), this, SLOT(fileShowAction()));
     connect(findChild<QMenu*>("menuScene"), SIGNAL(aboutToShow()), this, SLOT(sceneShowAction()));
@@ -174,7 +217,6 @@ MainWindow::MainWindow(QWidget *parent) :
 
     QApplication::setWindowIcon(QIcon("./gfx/BookSmith.ico"));
 
-    // [TODO] restore previous sizes
     QSplitter* splitter = findChild<QSplitter*>("splitter");
     QSize mainSize = size();
     QSize splitterSize = splitter->size();
@@ -194,8 +236,14 @@ MainWindow::MainWindow(QWidget *parent) :
 
     _totalWc = 0;
 
-    // [TODO] read args and open book if one is supplied
+    Util setup(ok(), okcancel(), yesno(), yesnocancel(), question());
+
     newAction();
+    if (file != "") {
+        printf("File = \"%s\"\n", file.toStdString().c_str());
+        open(file);
+    }
+
 }
 
 MainWindow::~MainWindow()
@@ -262,6 +310,32 @@ QJsonObject MainWindow::itemToObject(const QTreeWidgetItem* scene)
     return sceneObject;
 }
 
+static QJsonObject widgetToObject(QWidget* w)
+{
+    QJsonObject widget;
+    QRect r = w->geometry();
+    widget.insert("top", r.top());
+    widget.insert("left", r.left());
+    widget.insert("bottom", r.bottom());
+    widget.insert("right", r.right());
+    return widget;
+}
+
+static QJsonArray listToArray(QList<int> x)
+{
+    QJsonArray a;
+    for (int i = 0; i < x.count(); ++i) a.append(x[i]);
+    return a;
+}
+
+static QJsonObject dialogToObject(MainWindow::Dialog x)
+{
+    QJsonObject o;
+    o.insert("left", x.left);
+    o.insert("top", x.top);
+    return o;
+}
+
 bool MainWindow::save()
 {
     QTreeWidget* tree = findChild<QTreeWidget*>("treeWidget");
@@ -271,15 +345,31 @@ bool MainWindow::save()
 
     updateSceneWithEdits();
 
-    QTreeWidget* tree = findChild<QTreeWidget*>("treeWidget");
     QJsonObject root;
     root.insert("root", itemToObject(rootItem));
+    QJsonObject windows;
+    QJsonObject mainwindow = widgetToObject((QWidget*) this);
+    mainwindow.insert("splitter", (findChild<QSplitter*>("splitter")->sizes())[0]);
+    windows.insert("mainwindow", mainwindow);
+    QJsonObject fullscr;
+    fullscr.insert("sizes", listToArray(fullscreen().sizes));
+    fullscr.insert("sizes_2", listToArray(fullscreen().sizes_2));
+    windows.insert("fullscreen", fullscr);
+    windows.insert("finddialog", dialogToObject(finddialog()));
+    windows.insert("replacedialog", dialogToObject(replacedialog()));
+    windows.insert("tagdialog", dialogToObject(tagdialog()));
+    windows.insert("ok", dialogToObject(ok()));
+    windows.insert("okcancel", dialogToObject(okcancel()));
+    windows.insert("yesno", dialogToObject(yesno()));
+    windows.insert("yesnocancel", dialogToObject(yesnocancel()));
+    windows.insert("question", dialogToObject(question()));
     QJsonObject top;
     top.insert("document", root);
+    top.insert("windows", windows);
     QJsonDocument json;
     json.setObject(top);
-    QFile file(_dir + "/" + _scenes[0]._name + ".novel");
-    if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) return false;
+    QFile file(_dir + "/" + _scenes[idx]._name + ".novel");
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text)) return false;
     QTextStream out(&file);
     out << json.toJson();
     file.close();
@@ -293,7 +383,7 @@ bool MainWindow::saveAs()
     if (filename.isEmpty()) return false;
     int ext = filename.lastIndexOf(".novel");
     if (ext != -1) filename = filename.left(ext);
-    int sep = filename.lastIndexOf(QDir::separator());
+    int sep = filename.lastIndexOf("/");
     if (sep != -1) {
         _dir = filename.left(sep + 1);
         filename = filename.mid(sep + 1);
@@ -301,22 +391,120 @@ bool MainWindow::saveAs()
 
     QTreeWidget* tree = findChild<QTreeWidget*>("treeWidget");
     QTreeWidgetItem* rootItem = tree->topLevelItem(0);
+    rootItem->setText(0, filename);
     int idx = rootItem->data(0, Qt::ItemDataRole::UserRole).toInt();
     _scenes[idx]._name = filename;
+    return true;
+}
+
+static void objectToWidget(const QJsonObject& widget, QWidget* w)
+{
+    QRect r;
+    r.setTop(widget["top"].toInt());
+    r.setLeft(widget["left"].toInt());
+    r.setBottom(widget["bottom"].toInt());
+    r.setRight(widget["right"].toInt());
+    w->setGeometry(r);
+}
+
+static QList<int> arrayToList(QJsonArray a)
+{
+    QList<int> lst;
+    for (int i = 0; i < a.count(); ++i) lst.append(a[i].toInt());
+    return lst;
+}
+
+static void toDialog(const QJsonObject& windows, const QString& name, MainWindow::Dialog& dlg)
+{
+    if (windows.contains(name)) {
+        const QJsonObject& dialog = windows[name].toObject();
+        dlg.left = dialog["left"].toInt();
+        dlg.top = dialog["top"].toInt();
+    }
+}
+
+bool MainWindow::open(const QString& fname)
+{
+    QString filename = fname;
+    QTreeWidget* tree = findChild<QTreeWidget*>("treeWidget");
+
+    int ext = filename.lastIndexOf(".novel");
+    if (ext != -1) filename = filename.left(ext);
+    int sep = filename.lastIndexOf("/");
+    if (sep != -1) {
+        _dir = filename.left(sep + 1);
+        filename = filename.mid(sep + 1);
+    }
+    sep = filename.lastIndexOf("\\");
+    if (sep != -1) {
+        _dir = filename.left(sep + 1);
+        filename = filename.mid(sep + 1);
+    }
+
+    QFile file(_dir + "/" + filename + ".novel");
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) return false;
+    QByteArray data(file.readAll());
+    QString jsonStr(data);
+    file.close();
+    QJsonDocument json = QJsonDocument::fromJson(jsonStr.toUtf8());
+
+    // scan the json structure in for valid novel
+    const QJsonObject& top = json.object();
+    if (!top.contains("document")) return false;
+
+    const QJsonObject& doc = top["document"].toObject();
+    const QJsonObject& root = doc["root"].toObject();
+    tree->clear();
+    _scenes.clear();
+    tree->addTopLevelItem(objectToItem(root, _totalWc));
+
+    if (top.contains("windows")) {
+        const QJsonObject& windows = top["windows"].toObject();
+        QJsonObject mainwindow = windows["mainwindow"].toObject();
+        objectToWidget(mainwindow, (QWidget*) this);
+        if (mainwindow.contains("splitter")) {
+            int w = mainwindow["splitter"].toInt();
+            QSplitter* splitter = findChild<QSplitter*>("splitter");
+            QSize splitterSize = splitter->size();
+            QList<int> sizes = splitter->sizes();
+            sizes[0] = w;
+            sizes[1] = splitterSize.width() - w;
+            splitter->setSizes(sizes);
+        }
+        if (windows.contains("fullscreen")) {
+            const QJsonObject& fullscr = windows["fullscreen"].toObject();
+            struct MainWindow::Fullscreen& full = fullscreen();
+            full.sizes = arrayToList(fullscr["sizes"].toArray());
+            full.sizes_2 = arrayToList(fullscr["sizes_2"].toArray());
+        }
+        toDialog(windows, "finddialog", finddialog());
+        toDialog(windows, "replacedialog", replacedialog());
+        toDialog(windows, "tagdialog", tagdialog());
+        toDialog(windows, "ok", ok());
+        toDialog(windows, "okcancel", okcancel());
+        toDialog(windows, "yesno", yesno());
+        toDialog(windows, "yesnocancel", yesnocancel());
+        toDialog(windows, "question", question());
+    }
+
+    QTextEdit* text = findChild<QTextEdit*>("textEdit");
+    text->clear();
+    text->setEnabled(false);
+    _dirty = false;
     return true;
 }
 
 bool MainWindow::checkClose()
 {
     if (_dirty) {
-        switch (Util::YesNoCancel("Do you want to save the\nDocument first?")) {
+        switch (Util::YesNoCancel("Do you want to save your changes first?", "The current document has been changed!")) {
         case QMessageBox::Yes: if (save()) break; else return false;
         case QMessageBox::No:  break;
         default:               return false;
         }
     }
     else {
-        switch (Util::YesNo("Are you sure you want to quit?")) {
+        switch (Util::YesNo("Are you sure you want to quit?", "")) {
         case QMessageBox::Yes: break;
         default:               return false;
         }
@@ -416,7 +604,7 @@ void MainWindow::deleteAction()
     QTreeWidgetItem* current = tree->currentItem();
     QTreeWidgetItem* parent = current->parent();
     if (parent == nullptr) return;
-    switch (Util::YesNo("This action cannot be undone! Abort it?")) {
+    switch (Util::YesNo("Abort?", "This action cannot be undone!")) {
     case QMessageBox::Yes: return;
     default:               break;
     }
@@ -492,7 +680,12 @@ void MainWindow::findAction()
     FindDialog find(cursor.hasSelection());
     find.show();
 
-    if (!find.exec()) return;
+    int res = find.exec();
+    MainWindow::Dialog& d = finddialog();
+    QRect pos = find.geometry();
+    d.left = pos.left();
+    d.top = pos.top();
+    if (!res) return;
 
     QString look = find.getSearchString();
     FindDialog::type searchRange = find.getType();
@@ -533,7 +726,6 @@ void MainWindow::findAction()
         format.setForeground(pen);
         text->setTextCursor(cursor);
         text->ensureCursorVisible();
-        text->repaint();
         text->mergeCurrentCharFormat(format);
         text->setTextCursor(noSelection);
         text->repaint();
@@ -579,6 +771,12 @@ void MainWindow::fullScreenAction()
     fullScreen.showFullScreen();
     fullScreen.exec();
 
+    struct MainWindow::Fullscreen& f = fullscreen();
+    f.sizes.clear();
+    f.sizes_2.clear();
+    f.sizes.append(fullScreen.findChild<QSplitter*>("splitter")->sizes());
+    f.sizes_2.append(fullScreen.findChild<QSplitter*>("splitter_2")->sizes());
+
     mainTextEdit->setTextCursor(scrTextEdit->textCursor());
     mainTextEdit->ensureCursorVisible();
 }
@@ -614,7 +812,13 @@ void MainWindow::itemDoubleClickedAction(QTreeWidgetItem* current, int column)
     Scene x(currentScene);
     TagsDialog tags(x);
     tags.show();
-    if (tags.exec()) {
+    int res = tags.exec();
+    MainWindow::Dialog& d = tagdialog();
+    QRect pos = tags.geometry();
+    d.left = pos.left();
+    d.top = pos.top();
+
+    if (res) {
         currentScene = x;
         current->setText(0, x._name);
         _dirty = true;
@@ -688,7 +892,7 @@ void MainWindow::moveUpAction()
 void MainWindow::newAction()
 {
     if (_dirty) {
-        switch (Util::YesNoCancel("You haven't saved your latest changes!\nDo you want to save them first?")) {
+        switch (Util::YesNoCancel("Do you want to save your changes first?", "The current document has been changed!")) {
         case QMessageBox::Yes:    if (save()) break; else return;
         case QMessageBox::Cancel: return;
         default: break;
@@ -746,46 +950,17 @@ QTreeWidgetItem* MainWindow::objectToItem(const QJsonObject& obj, int& total)
 void MainWindow::openAction()
 {
     if (_dirty) {
-        switch (Util::YesNoCancel("You haven't saved your latest changes!\nDo you want to save them first?")) {
+        switch (Util::YesNoCancel("Do you want to save your changes first?", "The current document has been changed!")) {
         case QMessageBox::Yes:    if (save()) break; else return;
         case QMessageBox::Cancel: return;
         default: break;
         }
     }
 
-    QTreeWidget* tree = findChild<QTreeWidget*>("treeWidget");
-
     QString filename = QFileDialog::getOpenFileName(this, "Open File", _dir, "Novels (*.novel)");
     if (filename.isEmpty()) return;
-    int ext = filename.lastIndexOf(".novel");
-    if (ext != -1) filename = filename.left(ext);
-    int sep = filename.lastIndexOf("/");
-    if (sep != -1) {
-        _dir = filename.left(sep + 1);
-        filename = filename.mid(sep + 1);
-    }
 
-    QFile file(_dir + "/" + filename + ".novel");
-    if (!file.open(QIODevice::ReadWrite | QIODevice::Text)) return;
-    QByteArray data(file.readAll());
-    QString jsonStr(data);
-    file.close();
-    QJsonDocument json = QJsonDocument::fromJson(jsonStr.toUtf8());
-
-    // scan the json structure in for valid novel
-    const QJsonObject& top = json.object();
-    if (!top.contains("document")) return;
-
-    const QJsonObject& doc = top["document"].toObject();
-    const QJsonObject& root = doc["root"].toObject();
-    tree->clear();
-    _scenes.clear();
-    tree->addTopLevelItem(objectToItem(root, _totalWc));
-
-    QTextEdit* text = findChild<QTextEdit*>("textEdit");
-    text->clear();
-    text->setEnabled(false);
-    _dirty = false;
+    open(filename);
 }
 
 void MainWindow::outdentAction()
@@ -816,27 +991,90 @@ void MainWindow::pasteAction()
 
 void MainWindow::replaceAction()
 {
-    // display replace dialog
-    // if canceled: return
-    // get what to find
-    // get replacement
-    // get search range
-    // fill out find request
-    // do:
-    //   call findNext with request
-    //   if done:
-    //     show done msg
-    //     return
-    //   if replacingAll:
-    //     replace text
-    //     continue
-    //   highlight find
-    //   show replacement dialog
-    //   remove highlight
-    //   if cancelled: return
-    //   else if replace it or replace all:
-    //     replace text
-    //     if replace all: replaceAll is true
+    QTextEdit* text = findChild<QTextEdit*>("textEdit");
+    QTextCursor cursor = text->textCursor();
+    updateSceneWithEdits();
+
+    ReplaceDialog replace(cursor.hasSelection());
+    replace.show();
+
+    int res = replace.exec();
+    MainWindow::Dialog& d = replacedialog();
+    QRect pos = replace.geometry();
+    d.left = pos.left();
+    d.top = pos.top();
+    if (!res) return;
+
+    QString look = replace.getSearchString();
+    QString with = replace.getReplaceString();
+    FindDialog::type searchRange = replace.getType();
+    if (look.isEmpty()) return;
+
+    Search request(look, searchRange, with);
+
+    QTextCursor oldCursor = text->textCursor();
+    QTextCursor noSelection = oldCursor;
+    noSelection.setPosition(oldCursor.position());
+    text->setTextCursor(noSelection);
+
+    QColor pen(QColorConstants::Svg::white);
+    QColor back(QColorConstants::Svg::blue);
+    QColor normalPen(QColorConstants::Svg::black);
+    QColor normalBack(QColorConstants::Svg::white);
+
+    bool savedDirty = _dirty;
+    bool replacingAll = false;
+    bool replaced = false;
+
+    for (; ; ) {
+        MainWindow::Position found = request.findNext();
+        if (found.unset()) {
+            Util::OK("Replace complete", "Nothing more found");
+            break;
+        }
+
+        request.current(found);
+
+        QTreeWidgetItem* item = getItemByIndex(found.scene());
+        QTreeWidget* tree = findChild<QTreeWidget*>("treeWidget");
+        if (tree->currentItem() != item) tree->setCurrentItem(item);
+
+        cursor.setPosition(found.offset());
+        cursor.movePosition(QTextCursor::MoveOperation::NextCharacter, QTextCursor::MoveMode::KeepAnchor, look.size());
+
+        QTextCharFormat format = text->currentCharFormat();
+        format.setBackground(back);
+        format.setForeground(pen);
+        text->setTextCursor(cursor);
+        text->ensureCursorVisible();
+        text->mergeCurrentCharFormat(format);
+        text->setTextCursor(noSelection);
+        text->repaint();
+
+        int result = QMessageBox::Yes;
+        if (!replacingAll) result = Util::Question("Replace text?", "Find successful", QMessageBox::Yes | QMessageBox::YesToAll | QMessageBox::No | QMessageBox::Cancel);
+
+        format.setBackground(normalBack);
+        format.setForeground(normalPen);
+        text->setTextCursor(cursor);
+        text->mergeCurrentCharFormat(format);
+
+        if (result == QMessageBox::Yes || result == QMessageBox::YesToAll) {
+            text->insertPlainText(with);
+            found.offset(found.offset() + with.length() - 1);
+            request.current(found);
+            if (result == QMessageBox::YesToAll) replacingAll = true;
+            replaced = true;
+        }
+
+        text->setTextCursor(noSelection);
+        text->repaint();
+
+        if (result == QMessageBox::No) continue;
+        if (result == QMessageBox::Cancel) break;
+    }
+
+    _dirty = savedDirty || replaced;
 }
 
 void MainWindow::rightAction()
@@ -853,7 +1091,7 @@ void MainWindow::saveAction()
 
 void MainWindow::saveAsAction()
 {
-    saveAs();
+    if (saveAs()) save();
 }
 
 void MainWindow::sceneShowAction()

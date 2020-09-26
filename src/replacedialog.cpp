@@ -1,13 +1,11 @@
-#include "finddialog.h"
+#include "replacedialog.h"
+#include "ui_replacedialog.h"
 #include "mainwindow.h"
-#include "ui_finddialog.h"
-#include <QRadioButton>
-#include <QDialogButtonBox>
 #include <QPushButton>
 
-FindDialog::FindDialog(bool selection, QWidget *parent) :
+ReplaceDialog::ReplaceDialog(bool selection, QWidget *parent) :
     QDialog(parent),
-    ui(new Ui::FindDialog)
+    ui(new Ui::ReplaceDialog)
 {
     ui->setupUi(this);
     QRadioButton* select = findChild<QRadioButton*>("selectionRadioButton");
@@ -19,7 +17,7 @@ FindDialog::FindDialog(bool selection, QWidget *parent) :
     QPushButton* ok = box->button(QDialogButtonBox::StandardButton::Ok);
     ok->setEnabled(false);
 
-    MainWindow::Dialog& d = MainWindow::getMainWindow()->finddialog();
+    MainWindow::Dialog& d = MainWindow::getMainWindow()->replacedialog();
     QRect pos = geometry();
     int width = pos.width();
     int height = pos.height();
@@ -32,14 +30,15 @@ FindDialog::FindDialog(bool selection, QWidget *parent) :
     }
 
     connect(findChild<QLineEdit*>("lineEdit"), SIGNAL(textChanged(const QString &)), this, SLOT(changedText(const QString &)));
-}
+    connect(box, SIGNAL(accepted()), this, SLOT(accept()));
+    connect(box, SIGNAL(rejected()), this, SLOT(reject()));}
 
-FindDialog::~FindDialog()
+ReplaceDialog::~ReplaceDialog()
 {
     delete ui;
 }
 
-FindDialog::type FindDialog::getType()
+FindDialog::type ReplaceDialog::getType()
 {
     if (findChild<QRadioButton*>("selectionRadioButton")->isChecked()) return FindDialog::Selection;
     if (findChild<QRadioButton*>("sceneRadioButton")->isChecked()) return FindDialog::Scene;
@@ -48,12 +47,17 @@ FindDialog::type FindDialog::getType()
     return FindDialog::All;
 }
 
-QString FindDialog::getSearchString()
+QString ReplaceDialog::getSearchString()
 {
     return findChild<QLineEdit*>("lineEdit")->text();
 }
 
-void FindDialog::changedText(const QString &text)
+QString ReplaceDialog::getReplaceString()
+{
+    return findChild<QLineEdit*>("lineEdit_2")->text();
+}
+
+void ReplaceDialog::changedText(const QString &text)
 {
     QDialogButtonBox* box = findChild<QDialogButtonBox*>("buttonBox");
     QPushButton* ok = box->button(QDialogButtonBox::StandardButton::Ok);

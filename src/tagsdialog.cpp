@@ -1,5 +1,6 @@
 #include "tagsdialog.h"
 #include "ui_tagsdialog.h"
+#include "mainwindow.h"
 
 #include <QPushButton>
 
@@ -9,6 +10,18 @@ TagsDialog::TagsDialog(Scene& s, QWidget *parent) :
     _scene(&s)
 {
     ui->setupUi(this);
+
+    MainWindow::Dialog& d = MainWindow::getMainWindow()->tagdialog();
+    QRect pos = geometry();
+    int width = pos.width();
+    int height = pos.height();
+    if (d.top >= 0) {
+        pos.setTop(d.top);
+        if (d.left >= 0) pos.setLeft(d.left);
+        pos.setWidth(width);
+        pos.setHeight(height);
+        setGeometry(pos);
+    }
 
     connect(findChild<QLineEdit*>("lineEdit_2"), SIGNAL(returnPressed()),             this, SLOT(returnPressedAction()));
     connect(findChild<QLineEdit*>("lineEdit"),   SIGNAL(textChanged(const QString&)), this, SLOT(textChangedAction(const QString&)));
