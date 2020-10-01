@@ -205,6 +205,7 @@ MainWindow::MainWindow(const QString& file, QWidget *parent) :
     connect(findChild<QAction*>("actionJustify"),     SIGNAL(triggered()), this, SLOT(fullJustifyAction()));
     connect(findChild<QAction*>("actionIndent"),      SIGNAL(triggered()), this, SLOT(indentAction()));
     connect(findChild<QAction*>("actionOutdent"),     SIGNAL(triggered()), this, SLOT(outdentAction()));
+    connect(findChild<QAction*>("actionAbout"),       SIGNAL(triggered()), this, SLOT(aboutAction()));
 
     connect(findChild<QTreeWidget*>("treeWidget"), SIGNAL(currentItemChanged(QTreeWidgetItem*,QTreeWidgetItem*)), this, SLOT(currentItemChangedAction(QTreeWidgetItem*,QTreeWidgetItem*)));
     connect(findChild<QTreeWidget*>("treeWidget"), SIGNAL(itemDoubleClicked(QTreeWidgetItem*,int)),               this, SLOT(itemDoubleClickedAction(QTreeWidgetItem*,int)));
@@ -236,7 +237,7 @@ MainWindow::MainWindow(const QString& file, QWidget *parent) :
 
     _totalWc = 0;
 
-    Util setup(ok(), okcancel(), yesno(), yesnocancel(), question());
+    Util setup(ok(), okcancel(), yesno(), yesnocancel(), question(), statement());
 
     newAction();
     if (file != "") {
@@ -363,6 +364,7 @@ bool MainWindow::save()
     windows.insert("yesno", dialogToObject(yesno()));
     windows.insert("yesnocancel", dialogToObject(yesnocancel()));
     windows.insert("question", dialogToObject(question()));
+    windows.insert("statement", dialogToObject(statement()));
     QJsonObject top;
     top.insert("document", root);
     top.insert("windows", windows);
@@ -485,6 +487,7 @@ bool MainWindow::open(const QString& fname)
         toDialog(windows, "yesno", yesno());
         toDialog(windows, "yesnocancel", yesnocancel());
         toDialog(windows, "question", question());
+        toDialog(windows, "statement", statement());
     }
 
     QTextEdit* text = findChild<QTextEdit*>("textEdit");
@@ -524,6 +527,19 @@ void MainWindow::resizeEvent(QResizeEvent* event)
    mainSize.setHeight(mainSize.height() - _diff.height());
    mainSize.setWidth(mainSize.width() - _diff.width());
    findChild<QSplitter*>("splitter")->resize(mainSize);
+}
+
+void MainWindow::aboutAction()
+{
+    Util::Statement("<h1><center><b>About BookSmith</b></center></h1>"
+                    "<p><i>BookSmith</i> is a program designed to make writing books easier without a lot of distracting extras. "
+                    "It also features the ability to export the finished book as, at a minimum, a PDF, an epub, a ODT, or a text file.</p>"
+                    "<p>This program was writting by Christopher Martin Olson using the Qt multi-OS framework 5.x</p>"
+                    "<p>It also uses icons for the menus and toolbar from across the internet. If you beleive that any of them are being used in violation of"
+                    "copyright laws, please let the author know and he will seek a different icon immediately.  Thank you!</p>"
+                    "<p>Thank you to my wife, Nichola, for putting up with me writing this beast, and even encouraging me to finish it.</p>"
+                    "<p>Thank you to NaNoWriMo (look it up!) for giving me permission to write badly, because writing is something I've always badly wanted to do!</p>"
+                    "<p>Above all, thank you for giving this program a chance!  I hope you find it as useful a writing tool as I do!</p>");
 }
 
 void MainWindow::boldAction()

@@ -6,14 +6,16 @@ MainWindow::Dialog* Util::_okcancel;
 MainWindow::Dialog* Util::_yesno;
 MainWindow::Dialog* Util::_yesnocancel;
 MainWindow::Dialog* Util::_question;
+MainWindow::Dialog* Util::_statement;
 
-Util::Util(MainWindow::Dialog& ok, MainWindow::Dialog& okcancel, MainWindow::Dialog& yesno, MainWindow::Dialog& yesnocancel, MainWindow::Dialog& question)
+Util::Util(MainWindow::Dialog& ok, MainWindow::Dialog& okcancel, MainWindow::Dialog& yesno, MainWindow::Dialog& yesnocancel, MainWindow::Dialog& question, MainWindow::Dialog& statement)
 {
     _ok = &ok;
     _okcancel = &okcancel;
     _yesno = &yesno;
     _yesnocancel = &yesnocancel;
     _question = &question;
+    _statement = &statement;
 }
 
 static int showMsgBox(QMessageBox& msgBox, MainWindow::Dialog* save)
@@ -87,4 +89,12 @@ int Util::Question(const char* msg, const char* title, QFlags<QMessageBox::Stand
     msgBox.setInformativeText(msg);
     msgBox.setStandardButtons(buttons);
     return showMsgBox(msgBox, _question);
+}
+
+int Util::Statement(const char* msg)
+{
+    QMessageBox msgBox;
+    msgBox.setInformativeText(msg);
+    msgBox.setStandardButtons(QMessageBox::Ok);
+    return showMsgBox(msgBox, _statement);
 }

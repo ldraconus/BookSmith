@@ -73,6 +73,7 @@ public:
     struct Dialog& yesno()          { return _yesno; }
     struct Dialog& yesnocancel()    { return _yesnocancel; }
     struct Dialog& question()       { return _question; }
+    struct Dialog& statement()      { return _statement; }
 
     static MainWindow* getMainWindow() { return _mainWindow; }
 
@@ -136,6 +137,7 @@ private:
     Dialog _yesno = { -1, -1 };
     Dialog _yesnocancel = { -1, -1 };
     Dialog _question = { -1, -1 };
+    Dialog _statement = { -1, -1 };
 
     bool checkClose();
     void updateSceneWithEdits();
@@ -147,6 +149,7 @@ private:
     static MainWindow* _mainWindow;
 
 public slots:
+    void aboutAction();
     void boldAction();
     void centerAction();
     void checkAction();
