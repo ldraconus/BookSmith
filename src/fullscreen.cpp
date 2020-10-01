@@ -68,8 +68,6 @@ void FullScreen::keyReleaseEvent(QKeyEvent *e)
         MainWindow::getMainWindow()->change();
     }
     if (e->matches(QKeySequence::Save)) MainWindow::getMainWindow()->saveAction();
-
-    // [TODO] handle all of the edit keys
 }
 
 void FullScreen::textChangedAction()
