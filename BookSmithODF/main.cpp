@@ -1,11 +1,9 @@
 #include "mainwindow.h"
 
 #include <QApplication>
-#include <QMessageBox>
-#include <QtPrintSupport/QPrintEngine>
-#include <QtPrintSupport/QPrinter>
-#include <QTextDocument>
+#include <QTextDocumentWriter>
 #include <QTextDocumentFragment>
+#include <QTextDocument>
 #include <QTextBlock>
 #include <QTextEdit>
 #include <QTextFormat>
@@ -151,17 +149,17 @@ static void novelToDocument(QTextEdit& edit, Tree& tree)
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
-    if (argc != 3) return -1;
-    if (!open(argv[1])) return -1;
 
-    QPrinter printer(QPrinter::PrinterResolution);
-    printer.setOutputFormat(QPrinter::PdfFormat);
-    printer.setOutputFileName(argv[2]);
+    if (argc != 3) return -1;
+
+    if (!open(argv[1])) return -1;
 
     QTextEdit edit;
     novelToDocument(edit, tree);
     QTextDocument* document = edit.document();
-    document->print(&printer);
+    QTextDocumentWriter writer(argv[2]);
+    writer.setFormat("ODF");
+    writer.write(document);
 
     return 0;
 }

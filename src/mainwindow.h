@@ -11,6 +11,7 @@
 #include <QTextDocument>
 #include <QTreeWidgetItem>
 #include <QLabel>
+#include <QKeyEvent>
 #include <QToolBar>
 
 class Scene {
@@ -68,6 +69,7 @@ public:
     struct Dialog& finddialog()     { return _finddialog; }
     struct Dialog& replacedialog()  { return _replacedialog; }
     struct Dialog& tagdialog()      { return _tagdialog; }
+    struct Dialog& helpdialog()     { return _helpdialog; }
     struct Dialog& ok()             { return _ok; }
     struct Dialog& okcancel()       { return _okcancel; }
     struct Dialog& yesno()          { return _yesno; }
@@ -126,12 +128,14 @@ private:
     QList<Scene> _scenes;
     QLabel* _wcLabel;
     QString _dir;
+    QString _exeDir;
     int _dirty;
     int _totalWc;
     Fullscreen _fullscreen;
     Dialog _finddialog = { -1, -1 };
     Dialog _replacedialog = { -1, -1 };
     Dialog _tagdialog = { -1, -1 };
+    Dialog _helpdialog = { -1, -1 };
     Dialog _ok = { -1, -1 };
     Dialog _okcancel = { -1, -1 };
     Dialog _yesno = { -1, -1 };
@@ -140,6 +144,7 @@ private:
     Dialog _statement = { -1, -1 };
 
     bool checkClose();
+    void exportAs(QString type);
     void updateSceneWithEdits();
     QJsonObject sceneToObject(const Scene& scene);
     QJsonObject itemToObject(const QTreeWidgetItem* scene);
@@ -147,6 +152,8 @@ private:
     QTreeWidgetItem* objectToItem(const QJsonObject &item, int& total);
 
     static MainWindow* _mainWindow;
+
+    virtual void keyReleaseEvent(QKeyEvent *e);
 
 public slots:
     void aboutAction();
@@ -160,26 +167,31 @@ public slots:
     void itemDoubleClickedAction(QTreeWidgetItem* current, int column);
     void deleteAction();
     void editShowAction();
+    void epubAction();
     void fileShowAction();
     void findAction();
     void fullJustifyAction();
+    void helpAction();
     void indentAction();
     void italicAction();
     void leftAction();
-    void newAction();
-    void outdentAction();
     void moveDownAction();
     void moveInAction();
     void moveOutAction();
     void moveUpAction();
     void newSceneAction();
+    void newAction();
+    void odfAction();
     void openAction();
+    void outdentAction();
     void pasteAction();
+    void pdfAction();
     void replaceAction();
     void rightAction();
     void saveAction();
     void saveAsAction();
     void sceneShowAction();
+    void textAction();
     void textChangedAction();
     void underlineAction();
 };

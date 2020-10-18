@@ -44,7 +44,7 @@ FindDialog::type FindDialog::getType()
     if (findChild<QRadioButton*>("selectionRadioButton")->isChecked()) return FindDialog::Selection;
     if (findChild<QRadioButton*>("sceneRadioButton")->isChecked()) return FindDialog::Scene;
     if (findChild<QRadioButton*>("childrenRadioButton")->isChecked()) return FindDialog::SceneChildren;
-    if (findChild<QRadioButton*>("siblingRadioButton")->isChecked()) return FindDialog::SiblingChildren;
+    if (findChild<QRadioButton*>("siblingsRadioButton")->isChecked()) return FindDialog::SiblingChildren;
     return FindDialog::All;
 }
 
