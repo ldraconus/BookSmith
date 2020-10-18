@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <title>help</title>
+  </head>
+  <body>
+    <h1 style="text-align: center;">Welcome to BookSmith!</h1>
+    <p>BookSmith is a very simple, but complete, novel authoring software
+      package.&nbsp; To be blunt, most other novel authoring software is either
+      overkill for the job needed or woefully under powered for the job at
+      hand.&nbsp; Most of the complete software I have used have so many bells
+      and whistles built in that I can spend hours just tinkering with things
+      instead of writing (looking at you, Scriviner!).&nbsp; Others are simply
+      glorified word processors without the needed organization tools to give
+      the author the freedom to create (Word!).</p>
+    <p>BookSmith is different.&nbsp; It is organized around the scene.&nbsp;
+      Scenes can be grouped, tagged and edited.&nbsp; That is it.&nbsp;
+      Depending on how you want to export the novel there are certain tags and
+      organizations techniques you can use.&nbsp; The good thing is you don't
+      have to decide that now! You can go back later and organize things quickly
+      and easily.&nbsp; But there are not a lot of options or toggles.&nbsp;
+      Everything is accomplished simply.&nbsp; You can bold text, but font
+      selection is right out.&nbsp; You can center some thing, but changing how
+      a paragraph looks on the page is a no-no.&nbsp; There is no color coding
+      things (maybe I'm biased, being mostly color blind, but coloring things
+      just seems like a good way to spend time fiddling rather than
+      writing).&nbsp; Free form tags are used for everything in a dull, simple
+      and intuitive dialog.&nbsp; You really only spend as much time as needed
+      in it and that's all.</p>
+    <p>Now, after the preaching, it's time to take a tour of the interface,
+      which shouldn't take too long.</p>
+    <h2>Thousand foot view</h2>
+    <div style="text-align: left;"><img src="docs/UI.png" alt="UI image" title="UI"></div>
+    <div style="text-align: left;"><br>
+    </div>
+    <div style="text-align: left;">This is the window you will see every time
+      you start BookSmith.&nbsp; I've opened a book I am personally working on
+      so you can see how things look.At the very top is the name of program
+      along with the standard OS decorations.&nbsp; The next line is the menu
+      (on Macs, this menu line is always at the top of the screen). The next
+      line has the toolbar, with lots of common operations on it.&nbsp; If you
+      move the mouse pointer over the icons you will see what menu item the icon
+      corresponds to as well as what the keyboard shortcut is.&nbsp; The bottom
+      line on the window has the current word count since you opened the file
+      and the total word count of the document.&nbsp; As you can see, I really
+      have not done all that much yet...</div>
+    <div style="text-align: left;"><br>
+    </div>
+    <div style="text-align: left;">In the middle are two boxes.&nbsp; On the
+      left is the novel's outline, and on the right is the current scene's
+      text.&nbsp; As you can see, just because it is called a chapter doesn't
+      mean it can't contain text and in most cases it probably should.&nbsp; I
+      use it as a way to set off the chapter with a quote and some space at the
+      top of the scene to set it off from the previous chapter.&nbsp; Each
+      exporter will handle this kind of thing in a different way, and we'll
+      cover that when we get to that section.</div>
+    <h2>Constant Usage</h2>
+    <p>In this part of the help we are going to go over the things you will be
+      doing in the program with an intent to show how the program tries to make
+      your life easier.&nbsp; Some things are going to be explained later
+      because they are deserving of an entire discussion themselves, like
+      exporting for example.&nbsp; The first thing we need to go over are all of
+      the menus.&nbsp; The menus aare where you go when you want to do something
+      and aren't sure if the program allows it... kind of a shortcut help.</p>
+    <h3>Menus</h3>
+    <p>The menus are organized into groups by the things you are doing.</p>
+    <h4>File</h4>
+    <img src="docs/File.png" alt="File menu" title="File menu">
+    <p>The File menu deals with, you guessed it, file handling. It is very
+      simple:</p>
+    <ul>
+      <li>'New' gets rid of any current novel and leaves you withe a fresh new
+        one. As a bonus, BookSmith remembers where you put dialogs that pop up
+        from time to time and New will remember that information.&nbsp; If there
+        are any changes in the current novel that aren't saved, you be asked
+        what to do at that point.</li>
+      <li>'Open' works similarly to New above, except that it opens an already
+        existing novel.&nbsp; If there are changes in the current novel, relax
+        as Open will also ask you what to do.&nbsp; The dialog positions are
+        stored in each novel, so if you have a favorite position for things on
+        the screen, you can be assured that that's where things will go.&nbsp;
+        It also remembers the location and size of the main window and the width
+        of the full screen page ... more on that later.</li>
+      <li>'Save' puts any changes in the current novel and writes it to disk for
+        safety.&nbsp; If there is not yet a title set for the novel, Save will
+        ask you for one and set the first line of the novel structure to that
+        title for you.</li>
+      <li>'Save As' let's you save the novel with a new name if you would
+        like.&nbsp; This is handy when you start revising your noivel.&nbsp; You
+        can save it under a new name, perhaps adding ', revised' to the
+        name.&nbsp; If in the middle of the revision you realize you have made a
+        terrible error you can go back to the original.</li>
+      <li>'Export' is a whole other subject.&nbsp; For now, it's enough to know
+        you can export a copy of the novel as plain text, an open document
+        format file, a PDF, or even an Epub file.&nbsp; More exporters will be
+        added as needed by my adoring fans.</li>
+      <li>'Exit' stops editing the current novel and closes BookSmith.&nbsp;
+        Again, it will ask you what to do if there are any unsaved changes.</li>
+    </ul>
+    <h4>Scene</h4>
+    <p><img src="docs/Scene.png" alt="Scene menu" title="Scene"></p>
+    <p>The Scene menu lets you create, delete and move scenes around in the
+      outline.&nbsp; Not the shortcuts in the menu, they make it very easy to do
+      all of this from the keyboard.</p>
+    <ul>
+      <li>'New' creates a new empty scene in the novel subordinate to (within)
+        the current scene. If there are already scenes there, it is placed at
+        the end.&nbsp; Never fear, a scene can easily be moved from place to
+        place.&nbsp; The current scene remains current.&nbsp; This let's you
+        create several scenes in the same place all at once easily.</li>
+      <li>'Delete' removes the current scene. <span style="color: red;">WARNING!<span
+            style="color: black;"> Once a scene is deleted, it can't be brought
+            back (yet).&nbsp; Maybe just move the offending scene under a trash
+            scene until you are sure.</span></span></li>
+      <li>'Move Up' swaps the scene directly above (at the same level) with the
+        current scene. The current scene remains current.&nbsp; By doing this
+        with all of the moves you can keep moving the scene around until you are
+        happy with where it is without having to keep selecting it again.</li>
+      <li>'Move Down' swaps the scene directly below (at the same level, again)
+        with the current scene.</li>
+      <li>'Move In' makes the scene directly above it (at the same level) the
+        parent of the current scene effectively moving it underneath, or into,
+        that scene.</li>
+      <li>'Move Out' moves the scene to the same level as the former parent,
+        immediately after the parent scene.&nbsp; This moves it out of the
+        parent scene.&nbsp; Of course, you can't move a scene out of the novel
+        itself.</li>
+    </ul>
+    <h4>Edit</h4>
+    <p><img src="docs/Edit.png" alt="Edit menu" title="Edit"></p>
+    <p>The Edit menu is where you will probably spend most of your time
+      looking.&nbsp; It's really the heart of writing and organizing, and dare I
+      say it, editing a novel.&nbsp; I've tried to make everything usable from
+      the keyboard while still making sense.</p>
+    <ul>
+      <li>'Cut' copies the selected text to the clipboard and deletes it from
+        the scene being edited.</li>
+      <li>'Copy' works similarly to Cut, but does not delete the highlighted
+        text.</li>
+      <li>'Paste' takes what is in the clipboard and inserts it into the current
+        scene at the current cursor location.</li>
+      <li>'Find' lets you look for text in the a lot of ways.&nbsp; More about
+        this later.</li>
+      <li>'Replace' lets you find and replace text in the novel in a variety of
+        ways, again, details forth coming.</li>
+      <li>'Bold' toggles bold text on and off at the locations or selection.</li>
+      <li>'Italic' like bold, but with italics.</li>
+      <li>'Underline' see the above two, but replace bold with underline.</li>
+      <li>'Left' changes the current paragraph, or selection, to be left
+        justified.</li>
+      <li>'Center' changes the current paragraph, or selection, to be centered.</li>
+      <li>'Right' changes the current paragraph, or selection, to be right
+        justified.</li>
+      <li>'Justify' changes the current paragraph, or selection, to be full
+        justified (aligned right and left margins).</li>
+      <li>'Indent' changes the start of the paragraph to be moved right a
+        bit.&nbsp; Can be repeated for deeper indents.</li>
+      <li>'Outdent' undoes the last indent.</li>
+    </ul>
+    <h4>View</h4>
+    <p><img src="docs/View.png" alt="View Menu" title="View"></p>
+    <p>The View menu lets you look at stuff and change how you see the editor. </p>
+    <ul>
+      <li>'About' displays a simple dialog that describes the program, it's aims
+        and the tools used to make it.</li>
+      <li>'Help' just shows this file.&nbsp; If you are reading this, you
+        probably figured that out already.</li>
+      <li>'Full Screen' goes into distraction free mode.&nbsp; The margins can
+        be adjusted, just click in the right or left side of the page and move
+        it to widen or narrow it until it's the way you like it.&nbsp; BookSmith
+        will remember this for you the next time you go full screen.&nbsp; The
+        Edit menu control sequences still work, as well as the
+        File-&gt;Save.&nbsp; There are no menus available ... they are a
+        distraction!&nbsp; To get back to the main window mode, just press the
+        'Esc' key.</li>
+    </ul>
+    <h3>Book Outline</h3>
+    <p>The root of the outline is the novel's name.&nbsp; You can't edit a scene
+      for this, because it just makes no sense.&nbsp; You can you tag it, but it
+      might be a little odd since you can't edit anything.&nbsp; It's just the
+      novel's title.&nbsp; The little arrow off the the left either points right
+      or it points down.&nbsp; If it points right, you can't see anything
+      directly beneath and inside it.&nbsp; If it points down you can. Each item
+      with subordinate items has one.&nbsp; This lets you narrow your view of
+      the book down to the area you are working on if you need to.</p>
+    <h4>Tagging</h4>
+    <h4><img src="docs/Tagging.png" alt="Tagging dialog" title="Tagging"></h4>
+    <h4> </h4>
+    <p>Tagging is done very simply.&nbsp; Double click on a scene.&nbsp; Here is
+      where you can name the scene.&nbsp; Type a tag in the box and press
+      return.&nbsp; Tag created.&nbsp; Click on the tag.&nbsp; Tag
+      removed.&nbsp; It's that simple.&nbsp; In this case, I noted that this is
+      actually a scene (used by the exporters, see below) and I have decided it
+      would be useful to know who the point of view character is (Karl).&nbsp; I
+      would also maybe put in the location and the other characters as
+      well.&nbsp; Not really needed, just useful to me as the author.&nbsp; Feel
+      free to use it like you want.&nbsp; Not a pretty thing, but useful.</p>
+    <p>If you hit 'OK' the changes are saved in the novel. If instead you hit
+      'Cancel' they are tossed out like the trash.</p>
+    <h3>Text editing</h3>
+    <p>For the most part editing is just what you expect.&nbsp; You type words,
+      you highlight things, you can cut and paste things.&nbsp; Things work like
+      you expect them to, the way they work in the hundreds, if not thousands,
+      of other editors out there.&nbsp; It isn't until finding and replacing
+      that things get a different.</p>
+    <h4>Searching and Replacing </h4>
+    <p>Because of the way BookSmith organizes novels along scenes and those
+      scenes into outlines, searching and replacing are more complicated, but
+      still pretty understandable.</p>
+    <p><img src="docs/Search.png" alt="Search dialog" title="Search"> </p>
+    <p>Like normal, type what you want to find in the text box.&nbsp; Below that
+      things get interesting. If you have selected some text, BookSmith will
+      assume you want to search in that text and highlight that option.&nbsp; If
+      nothing is highlighted, it will assume you want to seach just int he
+      current scene.&nbsp; The other options expand the search further. They are
+      pretty understandable once you know the jargon:</p>
+    <ul>
+      <li>Children refers to everything beneath the current scene that would be
+        hidden if the arrow to the left is facing right (see the book outline
+        above).</li>
+      <li>Siblings refer to the scenes that have the same immediate parent (at
+        the same level in the outline and under the same scene).</li>
+    </ul>
+    <img src="docs/Found.png" alt="Found dialog" title="Found">
+    <p>Once you are ready, hit the 'OK' button.&nbsp; When BookSmith finds the
+      text you are looking for, it highlights it and asks you if you want to go
+      on ('Yes') or stop ('No').&nbsp; If you say yes it continues looking for
+      the next match.&nbsp; If it ever doesn't find a match, it tells you the
+      search is done.</p>
+    <p>Replace is similar to Find except there is the option to replace what you
+      found with something else (even nothing!).</p>
+    <p><img src="docs/Replace.png" alt="Replace dialog" title="Repalce"></p>
+    <p>Once the string is found you can replace that particular match and go to
+      the next one, replace all remaining matches as well, don't replace this
+      one, or just stop.</p>
+    <img src="docs/ReplaceIt.png" alt="ReplaceIt dialog" title="ReplaceIt">
+    <h3>Exporting</h3>
+    <p>The final, and some would say most important, part of writing a novel is
+      sharing it with others.&nbsp; BookSmith makes this pretty easy.&nbsp; You
+      can export the novel you have written in several formats: Text, ODF, PDF
+      and Epub.&nbsp; Each of these formats uses the tags to determine what to
+      output and how to output it.&nbsp; Not all of them use all of the tags,
+      and int he future more tags may be added to particular formats, or more
+      formats may be added!&nbsp; The file name used is the book name plus the
+      accepted extension for the file type.</p>
+    <h4>Plain Text</h4>
+    <p>This is by far the simplest way to export your novel.&nbsp; It looks for
+      'chapter' and 'scene' tags in order.&nbsp; It then strips out all of the
+      fancy bold, italic and underlines and dumps the text to a file ending with
+      the '.txt' extension.&nbsp; Page breaks are put in before chapters and
+      scenes are separated by blank lines.</p>
+    <h4>ODF (Open Document Format)</h4>
+    <p>The open document format is just what it says, a document format that can
+      be opened by most word processing applications.&nbsp; These files end with
+      '.odf'. It's more portable than the the more common word document or rtf
+      file. This format keeps all of the fancy letter formatting and, like the
+      text format, it looks at chapter and scene tags.&nbsp; In addition it
+      looks for a cover tag.&nbsp; In that scene it expects to find a path to a
+      jpeg or png file to be used as the cover on the very front of the
+      document.&nbsp; </p>
+    <h4>Adobe PDF</h4>
+    <p>PDF files are an extremely common ay to distribute books on the internet,
+      and I would be remiss not including them. These files end in '.pdf' and
+      the tags it looks for are identical to ODF above.</p>
+    <h4>Epub (for EBook readers)</h4>
+    <p>Epub is one of two popular Electronic Book formats (EBook for
+      short).&nbsp; The other format is Mobi, which is used by Kindle.&nbsp; I
+      have not yet found a description of the details of the mobi format so I
+      can't convert a book to it. Other tools exist to convert from epub to mobi
+      and back so it's not that big as problem.&nbsp; I am working on it
+      though.&nbsp; Watch this space!</p>
+    <p>The format itslef ends in '.epub' and uses all of the tags of ODF and
+      PDF, while adding several more:</p>
+    <ul>
+      <li><span style=" color:#bec0c2;"></span>"author": List the authors of the
+        book in this scene separated by commas.&nbsp; Pretty simple.
+      </li>
+      <li> "rights": What rights the author(s) are keeping or giving away.&nbsp;
+        This defaults to "Public Domain" if you don't put one here.&nbsp; A
+        simple copyright , the year and who by is probably sufficient</li>
+      <li>"language": What language is the novel in, it defaults to
+        'en-US'.&nbsp; If you change this, do it write or some book readers
+        might reject it (unlikely, but some books sites might miss-file it which
+        would a tragedy).</li>
+      <li>"publisher": This defaults to 'self'.&nbsp; Which is probably all
+        that's needed unless you are publishing a book by someone else, in which
+        case put your contact information here.</li>
+      <li>"id": This is a tricky one.&nbsp; If you don't supply one, the program
+        will generate one for you.&nbsp; There is no simple way to see they id
+        it generated, and you should be consistent in using it for all versions
+        of the ebook you produce.&nbsp; It's probably best to generate this one
+        if you anticipate updating the book (always anticipate this).&nbsp; I
+        recommend the site:
+        https://www.guidgenerator.com/online-guid-generator.aspx and select
+        hyphens and uppercase.&nbsp; Then generate one,&nbsp; copy it and paste
+        it into this scene and forget about it.</li>
+    </ul>
+    <p>That's all there is!&nbsp; Get out there and edit!</p>
+    <p><br>
+    </p>
+  </body>
+</html>
