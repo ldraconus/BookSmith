@@ -1,9 +1,11 @@
 #include "mainwindow.h"
 
 #include <QApplication>
+#include <QMessageBox>
 #include <QtPrintSupport/QPrintEngine>
 #include <QtPrintSupport/QPrinter>
 #include <QTextDocument>
+#include <QTextDocumentFragment>
 #include <QTextBlock>
 #include <QTextEdit>
 #include <QTextFormat>
@@ -79,45 +81,77 @@ static bool open(QString filename)
     return true;
 }
 
+static QString Cover;
+
+static bool recognizeTag(const QList<QString>& tags, const QString& tag)
+{
+    return (tags.indexOf(tag) != -1 ||
+            tags.indexOf(tag.left(1).toUpper() + tag.right(tag.length() - 1)) != -1 ||
+            tags.indexOf(tag.toUpper()) != -1);
+}
+
+static bool SaveStringByTag(const QList<QString>& tags, QString& where, QString tag, const QString& html)
+{
+    if (recognizeTag(tags, tag)) {
+        QTextEdit edit;
+        edit.setHtml(html);
+        where = edit.toPlainText();
+        return true;
+    }
+    return false;
+}
+
 static void sceneToDocument(QTextEdit& edit, const Scene& scene)
 {
     QTextEdit temp;
-    if (scene._tags.indexOf("chapter") != -1 ||
-        scene._tags.indexOf("Chapter") != -1 ||
-        scene._tags.indexOf("CHAPTER") != -1) {
-        temp.setHtml(scene._html);
-        QTextCursor cursor = temp.textCursor();
-        cursor.setPosition(0);
-        temp.setTextCursor(cursor);
-        cursor = temp.textCursor();
-        QTextBlockFormat blk = cursor.blockFormat();
-        blk.setPageBreakPolicy(QTextFormat::PageBreak_AlwaysBefore);
-        cursor.mergeBlockFormat(blk);
-        temp.setTextCursor(cursor);
-    }
-    else if (scene._tags.indexOf("scene") != -1 ||
-             scene._tags.indexOf("Scene") != -1 ||
-             scene._tags.indexOf("SCENE") != -1) temp.setHtml(scene._html);
-    temp.selectAll();
-    if (temp.textCursor().selectedText().length() != 0) {
-        temp.cut();
-        edit.paste();
-        edit.insertPlainText("\r\n");
+    if (!SaveStringByTag(scene._tags, Cover, "cover", scene._html)) {
+        if (recognizeTag(scene._tags, "chapter")) {
+            temp.setHtml(scene._html);
+            QTextCursor cursor = temp.textCursor();
+            cursor.setPosition(0);
+            temp.setTextCursor(cursor);
+            cursor = temp.textCursor();
+            QTextBlockFormat blk = cursor.blockFormat();
+            blk.setPageBreakPolicy(QTextFormat::PageBreak_AlwaysBefore);
+            cursor.mergeBlockFormat(blk);
+            temp.setTextCursor(cursor);
+        }
+        else if (recognizeTag(scene._tags, "scene")) temp.setHtml(scene._html);
+        temp.selectAll();
+        if (temp.textCursor().selectedText().length() != 0) {
+            temp.cut();
+            edit.paste();
+            edit.insertPlainText("\r\n");
+        }
     }
     for (const auto& scn: scene._children) sceneToDocument(edit, scn);
+}
+
+static void insertCover(QTextEdit& edit) {
+    if (!Cover.isEmpty()) {
+        QTextDocumentFragment fragment;
+        fragment = QTextDocumentFragment::fromHtml("<img height=\"803\" width=\"621\" src='file:///" + Cover + "'>");
+        QTextCursor cursor  = edit.textCursor();
+        cursor.setPosition(0);
+        edit.setTextCursor(cursor);
+        QTextBlockFormat blk = cursor.blockFormat();
+        blk.setPageBreakPolicy(QTextFormat::PageBreak_AlwaysAfter);
+        edit.setTextCursor(cursor);
+        edit.textCursor().insertFragment(fragment);
+        cursor.mergeBlockFormat(blk);
+    }
 }
 
 static void novelToDocument(QTextEdit& edit, Tree& tree)
 {
     sceneToDocument(edit, tree._top);
+    insertCover(edit);
 }
 
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
-
     if (argc != 3) return -1;
-
     if (!open(argv[1])) return -1;
 
     QPrinter printer(QPrinter::PrinterResolution);

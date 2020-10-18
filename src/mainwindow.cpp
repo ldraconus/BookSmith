@@ -2,6 +2,7 @@
 #include "fullscreen.h"
 #include "tagsdialog.h"
 #include "finddialog.h"
+#include "help.h"
 #include "replacedialog.h"
 #include "ui_mainwindow.h"
 #include "util.h"
@@ -14,8 +15,62 @@
 #include <QJsonArray>
 #include <QJsonObject>
 #include <QToolBar>
+#include <QMimeData>
+#include <QImageReader>
 
 MainWindow* MainWindow::_mainWindow = nullptr;
+
+class TextEdit : public QTextEdit
+{
+public:
+    bool canInsertFromMimeData(const QMimeData* source) const
+    {
+        return source->hasImage() || source->hasUrls() ||
+            QTextEdit::canInsertFromMimeData(source);
+    }
+
+    void insertFromMimeData(const QMimeData* source)
+    {
+        if (source->hasImage())
+        {
+            static int i = 1;
+            QUrl url(QString("dropped_image_%1").arg(i++));
+            dropImage(url, qvariant_cast<QImage>(source->imageData()));
+        }
+        else if (source->hasUrls())
+        {
+            foreach (QUrl url, source->urls())
+            {
+                QFileInfo info(url.toLocalFile());
+                if (QImageReader::supportedImageFormats().contains(info.suffix().toLower().toLatin1()))
+                    dropImage(url, QImage(info.filePath()));
+                else
+                    dropTextFile(url);
+            }
+        }
+        else
+        {
+            QTextEdit::insertFromMimeData(source);
+        }
+    }
+
+private:
+    void dropImage(const QUrl& url, const QImage& image)
+    {
+        if (!image.isNull())
+        {
+            document()->addResource(QTextDocument::ImageResource, url, image);
+            textCursor().insertImage(url.toString());
+        }
+    }
+
+    void dropTextFile(const QUrl& url)
+    {
+        QFile file(url.toLocalFile());
+        if (file.open(QIODevice::ReadOnly | QIODevice::Text))
+            textCursor().insertText(file.readAll());
+    }
+};
 
 void MainWindow::Search::init(FindDialog::type r)
 {
@@ -206,6 +261,11 @@ MainWindow::MainWindow(const QString& file, QWidget *parent) :
     connect(findChild<QAction*>("actionIndent"),      SIGNAL(triggered()), this, SLOT(indentAction()));
     connect(findChild<QAction*>("actionOutdent"),     SIGNAL(triggered()), this, SLOT(outdentAction()));
     connect(findChild<QAction*>("actionAbout"),       SIGNAL(triggered()), this, SLOT(aboutAction()));
+    connect(findChild<QAction*>("actionODF"),         SIGNAL(triggered()), this, SLOT(odfAction()));
+    connect(findChild<QAction*>("actionPDF"),         SIGNAL(triggered()), this, SLOT(pdfAction()));
+    connect(findChild<QAction*>("actionPlain_Text"),  SIGNAL(triggered()), this, SLOT(textAction()));
+    connect(findChild<QAction*>("actionEPUB"),        SIGNAL(triggered()), this, SLOT(epubAction()));
+    connect(findChild<QAction*>("actionHelp"),        SIGNAL(triggered()), this, SLOT(helpAction()));
 
     connect(findChild<QTreeWidget*>("treeWidget"), SIGNAL(currentItemChanged(QTreeWidgetItem*,QTreeWidgetItem*)), this, SLOT(currentItemChangedAction(QTreeWidgetItem*,QTreeWidgetItem*)));
     connect(findChild<QTreeWidget*>("treeWidget"), SIGNAL(itemDoubleClicked(QTreeWidgetItem*,int)),               this, SLOT(itemDoubleClickedAction(QTreeWidgetItem*,int)));
@@ -228,6 +288,7 @@ MainWindow::MainWindow(const QString& file, QWidget *parent) :
     sizes[0] = 200;
     sizes[1] = splitterSize.width() - 200;
     splitter->setSizes(sizes);
+    _exeDir = QFileInfo(QCoreApplication::applicationFilePath()).absolutePath();
 
     _dir = QDir::homePath();
 
@@ -288,7 +349,6 @@ int MainWindow::getParent(int idx)
 
 QJsonObject MainWindow::sceneToObject(const Scene& scene)
 {
-
     QJsonObject obj;
     obj.insert("name", scene._name);
     obj.insert("root", scene._root);
@@ -529,13 +589,18 @@ void MainWindow::resizeEvent(QResizeEvent* event)
    findChild<QSplitter*>("splitter")->resize(mainSize);
 }
 
+void MainWindow::keyReleaseEvent(QKeyEvent *e)
+{
+    if (e->matches(QKeySequence::Save)) saveAction();
+}
+
 void MainWindow::aboutAction()
 {
     Util::Statement("<h1><center><b>About BookSmith</b></center></h1>"
                     "<p><i>BookSmith</i> is a program designed to make writing books easier without a lot of distracting extras. "
-                    "It also features the ability to export the finished book as, at a minimum, a PDF, an epub, a ODT, or a text file.</p>"
+                    "It also features the ability to export the finished book as, at a minimum, a PDF, an epub, a ODF, or a text file.</p>"
                     "<p>This program was writting by Christopher Martin Olson using the Qt multi-OS framework 5.x</p>"
-                    "<p>It also uses icons for the menus and toolbar from across the internet. If you beleive that any of them are being used in violation of"
+                    "<p>It also uses icons for the menus and toolbar from across the internet. If you believe that any of them are being used in violation of"
                     "copyright laws, please let the author know and he will seek a different icon immediately.  Thank you!</p>"
                     "<p>Thank you to my wife, Nichola, for putting up with me writing this beast, and even encouraging me to finish it.</p>"
                     "<p>Thank you to NaNoWriMo (look it up!) for giving me permission to write badly, because writing is something I've always badly wanted to do!</p>"
@@ -667,6 +732,11 @@ void MainWindow::editShowAction()
     outdentAction->setEnabled(blk.indent() != 0);
 }
 
+void MainWindow::epubAction()
+{
+    exportAs("EPUB");
+}
+
 void MainWindow::fileShowAction()
 {
     QAction* saveAction = findChild<QAction*>("actionSave");
@@ -795,6 +865,18 @@ void MainWindow::fullScreenAction()
 
     mainTextEdit->setTextCursor(scrTextEdit->textCursor());
     mainTextEdit->ensureCursorVisible();
+}
+
+void MainWindow::helpAction()
+{
+    HelpDialog help(_exeDir);
+    help.show();
+    help.exec();
+
+    MainWindow::Dialog& d = helpdialog();
+    QRect pos = help.geometry();
+    d.left = pos.left();
+    d.top = pos.top();
 }
 
 void MainWindow::indentAction()
@@ -979,6 +1061,43 @@ void MainWindow::openAction()
     open(filename);
 }
 
+static QString slashToBackslash(QString file)
+{
+    QString result = "";
+    int pos;
+    while ((pos = file.indexOf("/")) != -1) {
+        result += file.left(pos) + "\\";
+        file = file.right(file.length() - pos - 1);
+    }
+    result += file;
+    return result;
+}
+
+void MainWindow::exportAs(QString type)
+{
+    QTreeWidget* tree = findChild<QTreeWidget*>("treeWidget");
+    QTreeWidgetItem* rootItem = tree->topLevelItem(0);
+    int idx = rootItem->data(0, Qt::ItemDataRole::UserRole).toInt();
+    if (_scenes[idx]._name == "") if (!saveAs()) return;
+
+    updateSceneWithEdits();
+
+    save();
+
+    QString file = _dir + "/" + _scenes[idx]._name;
+    QString input = "\"" + file + ".novel\"";
+    QString output = "\"" + file + "." + type.toLower() + "\"";
+    QString command = (_exeDir + "/BookSmith" + type + ".exe " + input + " " + output);
+    command = slashToBackslash(command);
+
+    if (system(command.toStdString().c_str()) < 0) Util::OK("Unable to export as " + type + ".\nMaybe reinstall BookSmith?");
+}
+
+void MainWindow::odfAction()
+{
+    exportAs("ODT");
+}
+
 void MainWindow::outdentAction()
 {
     QTextEdit* text = findChild<QTextEdit*>("textEdit");
@@ -993,16 +1112,24 @@ void MainWindow::outdentAction()
 
 void MainWindow::pasteAction()
 {
-    QTextEdit* text = findChild<QTextEdit*>("textEdit");
+    QTextEdit* qtext = findChild<QTextEdit*>("textEdit");
+    TextEdit* text = (TextEdit*) qtext;
     if (text->canPaste()) {
         text->paste();
-        QTextCursor postCursor = text->textCursor();
-        QTextBlockFormat blk = postCursor.blockFormat();
+        QTextCursor preCursor = text->textCursor();
+        QTextBlockFormat blk = preCursor.blockFormat();
         blk.setTextIndent(20.0);
         blk.setBottomMargin(10.0);
+        QTextCursor postCursor = text->textCursor();
+        text->setTextCursor(preCursor);
         postCursor.setBlockFormat(blk);
         text->setTextCursor(postCursor);
     }
+}
+
+void MainWindow::pdfAction()
+{
+    exportAs("PDF");
 }
 
 void MainWindow::replaceAction()
@@ -1135,6 +1262,11 @@ void MainWindow::sceneShowAction()
     moveDownAction->setEnabled(parent != nullptr && parent->indexOfChild(current) != parent->childCount() - 1);
     moveInAction->setEnabled(parent != nullptr && parent->indexOfChild(current) != 0);
     moveOutAction->setEnabled(parent != nullptr && parent->parent() != nullptr);
+}
+
+void MainWindow::textAction()
+{
+    exportAs("TXT");
 }
 
 static int countWords(QString x)
