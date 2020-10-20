@@ -214,26 +214,6 @@ MainWindow::MainWindow(const QString& file, QWidget *parent) :
     _mainWindow = this;
     _dirty = false;
 
-    // [TODO] set up toolbar
-    QToolBar* toolbar = findChild<QToolBar*>("mainToolBar");
-    createToolBarItem(toolbar, "./gfx/blank-file-16.ico",                      "New",        "New Book (Ctrl-N)",       SIGNAL(triggered()), SLOT(newAction()));
-    createToolBarItem(toolbar, "./gfx/folder-3-16.ico",                        "Open",       "Open Book (Ctrl-O)",      SIGNAL(triggered()), SLOT(openAction()));
-    createToolBarItem(toolbar, "./gfx/downloads-16.ico",                       "Save",       "Save Book (Ctrl-S)",      SIGNAL(triggered()), SLOT(saveAction()));
-    toolbar->addSeparator();
-    createToolBarItem(toolbar, "./gfx/bold-16.ico",                            "Bold",       "Bold Text (Ctrl-B)",      SIGNAL(triggered()), SLOT(boldAction()));
-    createToolBarItem(toolbar, "./gfx/italic-16.ico",                          "Italic",     "Italic Text (Ctrl-I)",    SIGNAL(triggered()), SLOT(italicAction()));
-    createToolBarItem(toolbar, "./gfx/Icons8-Windows-8-Editing-Underline.ico", "Underline",  "Underline Text (Ctrl-U)", SIGNAL(triggered()), SLOT(underlineAction()));
-    toolbar->addSeparator();
-    createToolBarItem(toolbar, "./gfx/alignment+left+text+icon_16.ico",        "Left",       "Left Text (Alt-L)",       SIGNAL(triggered()), SLOT(leftAction()));
-    createToolBarItem(toolbar, "./gfx/alignment+center+text+icon_16.ico",      "Center",     "Center Text (Alt-C)",     SIGNAL(triggered()), SLOT(centerAction()));
-    createToolBarItem(toolbar, "./gfx/alignment+right+text+icon_16.ico",       "Right",      "Right Text (Alt-R)",      SIGNAL(triggered()), SLOT(rightAction()));
-    createToolBarItem(toolbar, "./gfx/alignment+justify+text+icon_16.ico",     "Justify",    "Justify Text (Alt-J)",    SIGNAL(triggered()), SLOT(fullJustifyAction()));
-    toolbar->addSeparator();
-    createToolBarItem(toolbar, "./gfx/format+indent+increase_16.ico",          "Indent",     "Indent (Alt-])",          SIGNAL(triggered()), SLOT(indentAction()));
-    createToolBarItem(toolbar, "./gfx/format+indent+decrease16.ico",           "Outdent",    "Outdent (Alt-[)",         SIGNAL(triggered()), SLOT(outdentAction()));
-    toolbar->addSeparator();
-    createToolBarItem(toolbar, "./gfx/fullscreen_16.ico",                      "Fullscreen", "Full Screen (F11)",       SIGNAL(triggered()), SLOT(fullScreenAction()));
-
     connect(findChild<QAction*>("actionExit"),        SIGNAL(triggered()), this, SLOT(checkAction()));
     connect(findChild<QAction*>("actionFull_Screen"), SIGNAL(triggered()), this, SLOT(fullScreenAction()));
     connect(findChild<QAction*>("actionNew"),         SIGNAL(triggered()), this, SLOT(newAction()));
@@ -276,7 +256,34 @@ MainWindow::MainWindow(const QString& file, QWidget *parent) :
     connect(findChild<QMenu*>("menuScene"), SIGNAL(aboutToShow()), this, SLOT(sceneShowAction()));
     connect(findChild<QMenu*>("menuEdit"),  SIGNAL(aboutToShow()), this, SLOT(editShowAction()));
 
-    QApplication::setWindowIcon(QIcon("./gfx/BookSmith.ico"));
+    _exeDir = QFileInfo(QCoreApplication::applicationFilePath()).absolutePath();
+
+#ifdef Q_OS_MACOS
+    // take three dirs off _exeDir
+    int pos;
+    for (int i = 0; i < 3 && (pos = _exeDir.lastIndexOf("/")) != -1; ++i) _exeDir = _exeDir.left(pos);
+#endif
+
+    QToolBar* toolbar = findChild<QToolBar*>("mainToolBar");
+    createToolBarItem(toolbar, _exeDir + "/gfx/blank-file-16.ico",                      "New",        "New Book (Ctrl-N)",       SIGNAL(triggered()), SLOT(newAction()));
+    createToolBarItem(toolbar, _exeDir + "/gfx/folder-3-16.ico",                        "Open",       "Open Book (Ctrl-O)",      SIGNAL(triggered()), SLOT(openAction()));
+    createToolBarItem(toolbar, _exeDir + "/gfx/downloads-16.ico",                       "Save",       "Save Book (Ctrl-S)",      SIGNAL(triggered()), SLOT(saveAction()));
+    toolbar->addSeparator();
+    createToolBarItem(toolbar, _exeDir + "/gfx/bold-16.ico",                            "Bold",       "Bold Text (Ctrl-B)",      SIGNAL(triggered()), SLOT(boldAction()));
+    createToolBarItem(toolbar, _exeDir + "/gfx/italic-16.ico",                          "Italic",     "Italic Text (Ctrl-I)",    SIGNAL(triggered()), SLOT(italicAction()));
+    createToolBarItem(toolbar, _exeDir + "/gfx/Icons8-Windows-8-Editing-Underline.ico", "Underline",  "Underline Text (Ctrl-U)", SIGNAL(triggered()), SLOT(underlineAction()));
+    toolbar->addSeparator();
+    createToolBarItem(toolbar, _exeDir + "/gfx/alignment+left+text+icon_16.ico",        "Left",       "Left Text (Alt-L)",       SIGNAL(triggered()), SLOT(leftAction()));
+    createToolBarItem(toolbar, _exeDir + "/gfx/alignment+center+text+icon_16.ico",      "Center",     "Center Text (Alt-C)",     SIGNAL(triggered()), SLOT(centerAction()));
+    createToolBarItem(toolbar, _exeDir + "/gfx/alignment+right+text+icon_16.ico",       "Right",      "Right Text (Alt-R)",      SIGNAL(triggered()), SLOT(rightAction()));
+    createToolBarItem(toolbar, _exeDir + "/gfx/alignment+justify+text+icon_16.ico",     "Justify",    "Justify Text (Alt-J)",    SIGNAL(triggered()), SLOT(fullJustifyAction()));
+    toolbar->addSeparator();
+    createToolBarItem(toolbar, _exeDir + "/gfx/format+indent+increase_16.ico",          "Indent",     "Indent (Alt-])",          SIGNAL(triggered()), SLOT(indentAction()));
+    createToolBarItem(toolbar, _exeDir + "/gfx/format+indent+decrease16.ico",           "Outdent",    "Outdent (Alt-[)",         SIGNAL(triggered()), SLOT(outdentAction()));
+    toolbar->addSeparator();
+    createToolBarItem(toolbar, _exeDir + "/gfx/fullscreen_16.ico",                      "Fullscreen", "Full Screen (F11)",       SIGNAL(triggered()), SLOT(fullScreenAction()));
+
+    QApplication::setWindowIcon(QIcon(_exeDir + "/gfx/BookSmith.ico"));
 
     QSplitter* splitter = findChild<QSplitter*>("splitter");
     QSize mainSize = size();
@@ -288,7 +295,6 @@ MainWindow::MainWindow(const QString& file, QWidget *parent) :
     sizes[0] = 200;
     sizes[1] = splitterSize.width() - 200;
     splitter->setSizes(sizes);
-    _exeDir = QFileInfo(QCoreApplication::applicationFilePath()).absolutePath();
 
     _dir = QDir::homePath();
 
