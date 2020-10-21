@@ -1068,6 +1068,7 @@ void MainWindow::openAction()
     open(filename);
 }
 
+#ifdef Q_OS_WIN32
 static QString slashToBackslash(QString file)
 {
     QString result = "";
@@ -1079,6 +1080,7 @@ static QString slashToBackslash(QString file)
     result += file;
     return result;
 }
+#endif
 
 void MainWindow::exportAs(QString type)
 {
@@ -1102,7 +1104,11 @@ void MainWindow::exportAs(QString type)
 #endif
 
     QString command = (_exeDir + "/BookSmith" + type + exe + " " + input + " " + output);
+#ifdef Q_OS_WIN32
     command = slashToBackslash(command);
+#endif
+
+Util::Statement("command = \"" + command + "\"");
 
     if (system(command.toStdString().c_str()) < 0) Util::OK("Unable to export as " + type + ".\nMaybe reinstall BookSmith?");
 }
