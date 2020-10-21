@@ -157,6 +157,7 @@ private:
 
 public:
     QList<Scene>& Scenes() { return _scenes; }
+    QString Dir() { return _dir; }
 
 public slots:
     void aboutAction();

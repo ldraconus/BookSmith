@@ -31,333 +31,333 @@ namespace EPUB {
     struct Tree {
         Scene _top;
     };
-}
 
-static QString _dir;
-static EPUB::Tree tree;
+    static QString _dir;
+    static Tree tree;
 
-static EPUB::Scene objectToScene(const QJsonObject& obj)
-{
-    EPUB::Scene scene;
-    scene._html = obj["doc"].toString("");
-    scene._name = obj["name"].toString("");
-    const QJsonArray& tags = obj["tags"].toArray();
-    for (auto tag: tags) scene._tags.append(tag.toString(""));
-    return scene;
-}
-
-static EPUB::Scene objectToItem(const QJsonObject& obj)
-{
-    EPUB::Scene scene = objectToScene(obj);
-    const QJsonArray& children = obj["children"].toArray();
-    for (auto child: children) scene._children.append(objectToItem(child.toObject()));
-    return scene;
-}
-
-static bool open(QString filename)
-{
-    int ext = filename.lastIndexOf(".novel");
-    if (ext != -1) filename = filename.left(ext);
-    int sep = filename.lastIndexOf("/");
-    if (sep != -1) {
-        _dir = filename.left(sep);
-        filename = filename.right(filename.length() - sep - 1);
-    }
-    sep = filename.lastIndexOf("\\");
-    if (sep != -1) {
-        _dir = filename.left(sep);
-        filename = filename.right(filename.length() - sep - 1);
+    static Scene objectToScene(const QJsonObject& obj)
+    {
+        Scene scene;
+        scene._html = obj["doc"].toString("");
+        scene._name = obj["name"].toString("");
+        const QJsonArray& tags = obj["tags"].toArray();
+        for (auto tag: tags) scene._tags.append(tag.toString(""));
+        return scene;
     }
 
-    filename = _dir + "/" + filename + ".novel";
+    static Scene objectToItem(const QJsonObject& obj)
+    {
+        Scene scene = objectToScene(obj);
+        const QJsonArray& children = obj["children"].toArray();
+        for (auto child: children) scene._children.append(objectToItem(child.toObject()));
+        return scene;
+    }
 
-    QFile file;
-    file.setFileName(filename);
-    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) return false;
-    QByteArray data(file.readAll());
-    QString jsonStr(data);
-    file.close();
-    QJsonDocument json = QJsonDocument::fromJson(jsonStr.toUtf8());
+    static bool open(QString filename)
+    {
+        int ext = filename.lastIndexOf(".novel");
+        if (ext != -1) filename = filename.left(ext);
+        int sep = filename.lastIndexOf("/");
+        if (sep != -1) {
+            _dir = filename.left(sep);
+            filename = filename.right(filename.length() - sep - 1);
+        }
+        sep = filename.lastIndexOf("\\");
+        if (sep != -1) {
+            _dir = filename.left(sep);
+            filename = filename.right(filename.length() - sep - 1);
+        }
 
-    const QJsonObject& top = json.object();
-    if (!top.contains("document")) return false;
+        filename = _dir + "/" + filename + ".novel";
 
-    const QJsonObject& doc = top["document"].toObject();
-    const QJsonObject& root = doc["root"].toObject();
-    tree._top = objectToItem(root);
+        QFile file;
+        file.setFileName(filename);
+        if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) return false;
+        QByteArray data(file.readAll());
+        QString jsonStr(data);
+        file.close();
+        QJsonDocument json = QJsonDocument::fromJson(jsonStr.toUtf8());
 
-    return true;
-}
+        const QJsonObject& top = json.object();
+        if (!top.contains("document")) return false;
 
-struct Chapter {
-    QString _name;
-    QString _html;
-    Chapter(): _name(""), _html("") { }
-    Chapter(const QString& n): _name(n), _html("") { }
-    Chapter(const Chapter& c): _name(c._name), _html(c._html) { }
+        const QJsonObject& doc = top["document"].toObject();
+        const QJsonObject& root = doc["root"].toObject();
+        tree._top = objectToItem(root);
 
-    Chapter& operator=(const Chapter& c) { if (this != &c) { _name = c._name; _html = c._html; } return *this; }
-};
-
-static QString Cover = "";
-static QString Author = "Anonymous";
-static QString Name = "";
-static QString Rights = "Public Domain";
-static QString Language = "en-US";
-static QString Publisher = "Independent";
-static QString Id = "";
-
-static bool recognizeTag(const QList<QString>& tags, const QString& tag)
-{
-    return (tags.indexOf(tag) != -1 ||
-            tags.indexOf(tag.left(1).toUpper() + tag.right(tag.length() - 1)) != -1 ||
-            tags.indexOf(tag.toUpper()) != -1);
-}
-
-static bool SaveStringByTag(const QList<QString>& tags, QString& where, QString tag, const QString& html)
-{
-    if (recognizeTag(tags, tag)) {
-        QTextEdit edit;
-        edit.setHtml(html);
-        where = edit.toPlainText();
         return true;
     }
-    return false;
-}
 
-static void sceneToDocument(QList<Chapter>& book, QTextEdit& edit, const EPUB::Scene& scene)
-{
-    if (!SaveStringByTag(scene._tags, Cover, "cover", scene._html) &&
-        !SaveStringByTag(scene._tags, Author, "author", scene._html) &&
-        !SaveStringByTag(scene._tags, Rights, "rights", scene._html) &&
-        !SaveStringByTag(scene._tags, Language, "language", scene._html) &&
-        !SaveStringByTag(scene._tags, Publisher, "publisher", scene._html) &&
-        !SaveStringByTag(scene._tags, Id, "id", scene._html)) {
-        QTextEdit temp;
-        if (recognizeTag(scene._tags, "chapter")) {
-            int last = book.length() - 1;
-            if (last >= 0) book[last]._html = edit.toHtml();
-            Chapter n(scene._name);
-            book.append(n);
-            edit.clear();
-            temp.setHtml(scene._html);
+    struct Chapter {
+        QString _name;
+        QString _html;
+        Chapter(): _name(""), _html("") { }
+        Chapter(const QString& n): _name(n), _html("") { }
+        Chapter(const Chapter& c): _name(c._name), _html(c._html) { }
+
+        Chapter& operator=(const Chapter& c) { if (this != &c) { _name = c._name; _html = c._html; } return *this; }
+    };
+
+    static QString Cover = "";
+    static QString Author = "Anonymous";
+    static QString Name = "";
+    static QString Rights = "Public Domain";
+    static QString Language = "en-US";
+    static QString Publisher = "Independent";
+    static QString Id = "";
+
+    static bool recognizeTag(const QList<QString>& tags, const QString& tag)
+    {
+        return (tags.indexOf(tag) != -1 ||
+                tags.indexOf(tag.left(1).toUpper() + tag.right(tag.length() - 1)) != -1 ||
+                tags.indexOf(tag.toUpper()) != -1);
+    }
+
+    static bool SaveStringByTag(const QList<QString>& tags, QString& where, QString tag, const QString& html)
+    {
+        if (recognizeTag(tags, tag)) {
+            QTextEdit edit;
+            edit.setHtml(html);
+            where = edit.toPlainText();
+            return true;
         }
-        else if (recognizeTag(scene._tags, "scene")) temp.setHtml(scene._html);
-        temp.selectAll();
-        if (temp.textCursor().selectedText().length() != 0) {
-            temp.cut();
-            edit.paste();
-            edit.insertPlainText("\r\n");
+        return false;
+    }
+
+    static void sceneToDocument(QList<Chapter>& book, QTextEdit& edit, const Scene& scene)
+    {
+        if (!SaveStringByTag(scene._tags, Cover, "cover", scene._html) &&
+            !SaveStringByTag(scene._tags, Author, "author", scene._html) &&
+            !SaveStringByTag(scene._tags, Rights, "rights", scene._html) &&
+            !SaveStringByTag(scene._tags, Language, "language", scene._html) &&
+            !SaveStringByTag(scene._tags, Publisher, "publisher", scene._html) &&
+            !SaveStringByTag(scene._tags, Id, "id", scene._html)) {
+            QTextEdit temp;
+            if (recognizeTag(scene._tags, "chapter")) {
+                int last = book.length() - 1;
+                if (last >= 0) book[last]._html = edit.toHtml();
+                Chapter n(scene._name);
+                book.append(n);
+                edit.clear();
+                temp.setHtml(scene._html);
+            }
+            else if (recognizeTag(scene._tags, "scene")) temp.setHtml(scene._html);
+            temp.selectAll();
+            if (temp.textCursor().selectedText().length() != 0) {
+                temp.cut();
+                edit.paste();
+                edit.insertPlainText("\r\n");
+            }
+        }
+        for (const auto& scn: scene._children) sceneToDocument(book, edit, scn);
+    }
+
+    static void novelToDocument(QList<Chapter>& book, Tree& tree)
+    {
+        QTextEdit edit;
+        Name = tree._top._name;
+        sceneToDocument(book, edit, tree._top);
+        int last = book.length() - 1;
+        if (last >= 0) book[last]._html = edit.toHtml();
+    }
+
+    static int chapterNumWidth(const QList<Chapter>& book)
+    {
+        char buffer[15];
+        sprintf(buffer, "%d", book.length());
+        return (int) strlen(buffer);
+    }
+
+    static QString chapterManifest(const QList<Chapter>& book)
+    {
+        QString manifest = "";
+        int len = chapterNumWidth(book);
+        for (int i = 1; i < book.length() + 1; ++i) {
+            char line[1024];
+            sprintf(line, "        <item id=\"chapter%0*d\" href=\"chap%0*d.xhtml\" media-type=\"application/xhtml+xml\" />\n", len, i, len, i);
+            manifest += line;
+        }
+        return manifest;
+    }
+
+    static QString spineTOC(const QList<Chapter>& book)
+    {
+        QString spine;
+        int len = chapterNumWidth(book);
+        for (int i = 1; i < book.length() + 1; ++i) {
+            char line[1024];
+            sprintf(line, "        <itemref idref=\"chapter%0*d\" />\n", len, i);
+            spine += line;
+        }
+        return spine;
+    }
+
+    static QString navPoints(const QList<Chapter>& book)
+    {
+        QString nav;
+        int len = chapterNumWidth(book);
+        for (int i = 1; i < book.length() + 1; ++i) {
+            char line[1024];
+            sprintf(line,     "      <navPoint id=\"chapter%0*d\" playOrder=\"%d\">\n"
+                              "          <navLabel>\n"
+                              "              <text>%s</text>\n"
+                              "          </navLabel>\n"
+                              "          <content src=\"chap%0*d.xhtml\"/>\n"
+                              "      </navPoint>\n", len, i, i, book[i - 1]._name.toStdString().c_str(), len, i);
+            nav += line;
+        }
+        return nav;
+
+    }
+
+    static QString convertHTML(QString html, QString title)
+    {
+        // remove all style="..."
+        html = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" + html;
+        int pos = html.indexOf("<!DOCTYPE");
+        QString left = html.left(pos);
+        html = html.right(html.length() - pos);
+        pos = html.indexOf(">");
+        html = left + "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.1//EN\" \"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd\">" + html.right(html.length() - pos - 1);
+        pos = html.indexOf("<html>") + 5;
+        html = html.left(pos) + " xmlns=\"http://www.w3.org/1999/xhtml\"" + html.right(html.length() - pos);
+        pos = html.indexOf("<style ");
+        int end = html.indexOf("</style>") + 8;
+        html = html.left(pos) + html.right(html.length() - end);
+        while ((pos = html.indexOf(" align=\"center\"")) != -1) html = html.left(pos) + html.right(html.length() - pos - 15);
+        while ((pos = html.indexOf(" align=\"right\"")) != -1) html = html.left(pos) + html.right(html.length() - pos - 14);
+        while ((pos = html.indexOf(" align=\"left\"")) != -1) html = html.left(pos) + html.right(html.length() - pos - 13);
+        while ((pos = html.indexOf(" align=\"full\"")) != -1) html = html.left(pos) + html.right(html.length() - pos - 13);
+        pos = html.indexOf("<head>") + 6;
+        html = html.left(pos) + "<title>" + title + "</title>" + html.right(html.length() - pos);
+        return html;
+    }
+
+    #ifdef NOTDEF
+    class ZipEntry {
+    public:
+        typedef QList<unsigned char> ZipEntryData;
+
+    private:
+        ZipEntryData _binary;
+        QString _data;
+        QString _name;
+        bool _compress;
+
+    public:
+        ZipEntry(bool c = true): _compress(c) { }
+        ZipEntry(const QString& n, const QString& d, bool c = true): _data(d), _name(n), _compress(c) { }
+        ZipEntry(const QString& n, const ZipEntryData& b, bool c = true): _binary(b), _name(n), _compress(c) { }
+        ZipEntry(const ZipEntry& z): _binary(z._binary), _data(z._data), _name(z._name), _compress(z._compress) { }
+
+        ZipEntry& operator=(const ZipEntry& z) { if (this != &z) { _binary = z._binary; _data = z._data; _name = z._name; _compress = z._compress; } return *this; }
+
+        QString Data() const { return _data; }
+        QString Name() const { return _name; }
+        const ZipEntryData& Binary() const { return _binary; }
+        bool Compress() const { return _compress; }
+
+        zip_source_t* asSource() const;
+    };
+
+    zip_source_t* ZipEntry::asSource() const
+    {
+        zip_error_t err;
+        if (Data().isEmpty()) {
+            char* data = (char*) malloc(Binary().size());
+            for (int i = 0; i < Binary().size(); ++i) data[i] = Binary()[i];
+            return zip_source_buffer_create((const void*) data, (size_t) Binary().size(), 1, &err);
+        }
+        else return zip_source_buffer_create((const void*) Data().toStdString().c_str(), (size_t) Data().length(), 1, &err);
+    }
+
+    class Zip {
+    private:
+        zip_t* _zip;
+        QList<ZipEntry> _files;
+
+    public:
+        Zip() {}
+
+        void Close();
+        void Create(const QString& filename);
+        void AddEntry(const QString& n, const QString& d, bool c = true);
+        void AddEntry(const QString& n, const ZipEntry::ZipEntryData& b, bool c = true);
+        void Save();
+
+        static const bool DO_NOT_COMPRESS = false;
+    };
+
+    void Zip::Create(const QString& filename)
+    {
+        int err;
+        _zip = zip_open(filename.toStdString().c_str(), ZIP_CREATE | ZIP_TRUNCATE, &err);
+        _files.clear();
+    }
+
+    void Zip::AddEntry(const QString& n, const QString& d, bool c)
+    {
+        _files.append(ZipEntry(n, d, c));
+    }
+
+    void Zip::AddEntry(const QString& n, const ZipEntry::ZipEntryData& b, bool c)
+    {
+        _files.append(ZipEntry(n, b, c));
+    }
+
+    void Zip::Close()
+    {
+        zip_close(_zip);
+    }
+
+    static QList<QString> split(QString name, const QString& sep)
+    {
+        QList<QString> parts;
+        int pos;
+        while ((pos = name.indexOf(sep)) != -1) {
+            parts.append(name.left(pos));
+            name = name.right(name.length() - pos - 1);
+        }
+        parts.append(name);
+        return parts;
+    }
+
+    void Zip::Save()
+    {
+        std::map<QString, bool> dirs;
+        for (const auto& x: _files) {
+            zip_source_t* src = x.asSource();
+            QList<QString> parts = split(x.Name(), "/");
+            QString dir = "";
+            for (int i = 0; i < parts.size() - 1; ++i) {
+                if (i != 0) dir += "/";
+                dir += parts[i];
+                if (!dirs[dir]) zip_add_dir(_zip, dir.toStdString().c_str());
+                dirs[dir] = true;
+            }
+            zip_int64_t idx = zip_file_add(_zip, x.Name().toStdString().c_str(), src, ZIP_FL_OVERWRITE);
+            if (!x.Compress()) zip_set_file_compression(_zip, idx, ZIP_CM_STORE, 0);
+            else zip_set_file_compression(_zip, idx, ZIP_CM_DEFAULT, 0);
         }
     }
-    for (const auto& scn: scene._children) sceneToDocument(book, edit, scn);
-}
 
-static void novelToDocument(QList<Chapter>& book, EPUB::Tree& tree)
-{
-    QTextEdit edit;
-    Name = tree._top._name;
-    sceneToDocument(book, edit, tree._top);
-    int last = book.length() - 1;
-    if (last >= 0) book[last]._html = edit.toHtml();
-}
-
-static int chapterNumWidth(const QList<Chapter>& book)
-{
-    char buffer[15];
-    sprintf(buffer, "%d", book.length());
-    return (int) strlen(buffer);
-}
-
-static QString chapterManifest(const QList<Chapter>& book)
-{
-    QString manifest = "";
-    int len = chapterNumWidth(book);
-    for (int i = 1; i < book.length() + 1; ++i) {
-        char line[1024];
-        sprintf(line, "        <item id=\"chapter%0*d\" href=\"chap%0*d.xhtml\" media-type=\"application/xhtml+xml\" />\n", len, i, len, i);
-        manifest += line;
+    static void loadCover(const QString& name, ZipEntry::ZipEntryData& jpg)
+    {
+        QFile file(name);
+        if (!file.open(QIODevice::ReadOnly)) return;
+        QByteArray data(file.readAll());
+        for (const auto& x: data) jpg.append(x);
     }
-    return manifest;
-}
-
-static QString spineTOC(const QList<Chapter>& book)
-{
-    QString spine;
-    int len = chapterNumWidth(book);
-    for (int i = 1; i < book.length() + 1; ++i) {
-        char line[1024];
-        sprintf(line, "        <itemref idref=\"chapter%0*d\" />\n", len, i);
-        spine += line;
+    #else
+    static void loadCover(const QString& name, Zippy::ZipEntryData& jpg)
+    {
+        QFile file(name);
+        if (!file.open(QIODevice::ReadOnly)) return;
+        QByteArray data(file.readAll());
+        for (const auto& x: data) jpg.emplace_back(x);
     }
-    return spine;
+    #endif
 }
-
-static QString navPoints(const QList<Chapter>& book)
-{
-    QString nav;
-    int len = chapterNumWidth(book);
-    for (int i = 1; i < book.length() + 1; ++i) {
-        char line[1024];
-        sprintf(line,     "      <navPoint id=\"chapter%0*d\" playOrder=\"%d\">\n"
-                          "          <navLabel>\n"
-                          "              <text>%s</text>\n"
-                          "          </navLabel>\n"
-                          "          <content src=\"chap%0*d.xhtml\"/>\n"
-                          "      </navPoint>\n", len, i, i, book[i - 1]._name.toStdString().c_str(), len, i);
-        nav += line;
-    }
-    return nav;
-
-}
-
-static QString convertHTML(QString html, QString title)
-{
-    // remove all style="..."
-    html = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" + html;
-    int pos = html.indexOf("<!DOCTYPE");
-    QString left = html.left(pos);
-    html = html.right(html.length() - pos);
-    pos = html.indexOf(">");
-    html = left + "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.1//EN\" \"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd\">" + html.right(html.length() - pos - 1);
-    pos = html.indexOf("<html>") + 5;
-    html = html.left(pos) + " xmlns=\"http://www.w3.org/1999/xhtml\"" + html.right(html.length() - pos);
-    pos = html.indexOf("<style ");
-    int end = html.indexOf("</style>") + 8;
-    html = html.left(pos) + html.right(html.length() - end);
-    while ((pos = html.indexOf(" align=\"center\"")) != -1) html = html.left(pos) + html.right(html.length() - pos - 15);
-    while ((pos = html.indexOf(" align=\"right\"")) != -1) html = html.left(pos) + html.right(html.length() - pos - 14);
-    while ((pos = html.indexOf(" align=\"left\"")) != -1) html = html.left(pos) + html.right(html.length() - pos - 13);
-    while ((pos = html.indexOf(" align=\"full\"")) != -1) html = html.left(pos) + html.right(html.length() - pos - 13);
-    pos = html.indexOf("<head>") + 6;
-    html = html.left(pos) + "<title>" + title + "</title>" + html.right(html.length() - pos);
-    return html;
-}
-
-#ifdef NOTDEF
-class ZipEntry {
-public:
-    typedef QList<unsigned char> ZipEntryData;
-
-private:
-    ZipEntryData _binary;
-    QString _data;
-    QString _name;
-    bool _compress;
-
-public:
-    ZipEntry(bool c = true): _compress(c) { }
-    ZipEntry(const QString& n, const QString& d, bool c = true): _data(d), _name(n), _compress(c) { }
-    ZipEntry(const QString& n, const ZipEntryData& b, bool c = true): _binary(b), _name(n), _compress(c) { }
-    ZipEntry(const ZipEntry& z): _binary(z._binary), _data(z._data), _name(z._name), _compress(z._compress) { }
-
-    ZipEntry& operator=(const ZipEntry& z) { if (this != &z) { _binary = z._binary; _data = z._data; _name = z._name; _compress = z._compress; } return *this; }
-
-    QString Data() const { return _data; }
-    QString Name() const { return _name; }
-    const ZipEntryData& Binary() const { return _binary; }
-    bool Compress() const { return _compress; }
-
-    zip_source_t* asSource() const;
-};
-
-zip_source_t* ZipEntry::asSource() const
-{
-    zip_error_t err;
-    if (Data().isEmpty()) {
-        char* data = (char*) malloc(Binary().size());
-        for (int i = 0; i < Binary().size(); ++i) data[i] = Binary()[i];
-        return zip_source_buffer_create((const void*) data, (size_t) Binary().size(), 1, &err);
-    }
-    else return zip_source_buffer_create((const void*) Data().toStdString().c_str(), (size_t) Data().length(), 1, &err);
-}
-
-class Zip {
-private:
-    zip_t* _zip;
-    QList<ZipEntry> _files;
-
-public:
-    Zip() {}
-
-    void Close();
-    void Create(const QString& filename);
-    void AddEntry(const QString& n, const QString& d, bool c = true);
-    void AddEntry(const QString& n, const ZipEntry::ZipEntryData& b, bool c = true);
-    void Save();
-
-    static const bool DO_NOT_COMPRESS = false;
-};
-
-void Zip::Create(const QString& filename)
-{
-    int err;
-    _zip = zip_open(filename.toStdString().c_str(), ZIP_CREATE | ZIP_TRUNCATE, &err);
-    _files.clear();
-}
-
-void Zip::AddEntry(const QString& n, const QString& d, bool c)
-{
-    _files.append(ZipEntry(n, d, c));
-}
-
-void Zip::AddEntry(const QString& n, const ZipEntry::ZipEntryData& b, bool c)
-{
-    _files.append(ZipEntry(n, b, c));
-}
-
-void Zip::Close()
-{
-    zip_close(_zip);
-}
-
-static QList<QString> split(QString name, const QString& sep)
-{
-    QList<QString> parts;
-    int pos;
-    while ((pos = name.indexOf(sep)) != -1) {
-        parts.append(name.left(pos));
-        name = name.right(name.length() - pos - 1);
-    }
-    parts.append(name);
-    return parts;
-}
-
-void Zip::Save()
-{
-    std::map<QString, bool> dirs;
-    for (const auto& x: _files) {
-        zip_source_t* src = x.asSource();
-        QList<QString> parts = split(x.Name(), "/");
-        QString dir = "";
-        for (int i = 0; i < parts.size() - 1; ++i) {
-            if (i != 0) dir += "/";
-            dir += parts[i];
-            if (!dirs[dir]) zip_add_dir(_zip, dir.toStdString().c_str());
-            dirs[dir] = true;
-        }
-        zip_int64_t idx = zip_file_add(_zip, x.Name().toStdString().c_str(), src, ZIP_FL_OVERWRITE);
-        if (!x.Compress()) zip_set_file_compression(_zip, idx, ZIP_CM_STORE, 0);
-        else zip_set_file_compression(_zip, idx, ZIP_CM_DEFAULT, 0);
-    }
-}
-
-static void loadCover(const QString& name, ZipEntry::ZipEntryData& jpg)
-{
-    QFile file(name);
-    if (!file.open(QIODevice::ReadOnly)) return;
-    QByteArray data(file.readAll());
-    for (const auto& x: data) jpg.append(x);
-}
-#else
-static void loadCover(const QString& name, Zippy::ZipEntryData& jpg)
-{
-    QFile file(name);
-    if (!file.open(QIODevice::ReadOnly)) return;
-    QByteArray data(file.readAll());
-    for (const auto& x: data) jpg.emplace_back(x);
-}
-#endif
 
 #ifdef Q_OS_MACOS
 namespace EPUB {
@@ -371,7 +371,7 @@ int main(int argc, char *argv[])
     if (!open(argv[1])) return -1;
 
     QList<Chapter> book;
-    novelToDocument(book, tree);
+    EPUB::novelToDocument(book, tree);
 
     // create the zip file from the book
     Zippy::ZipArchive arch;
@@ -386,7 +386,7 @@ int main(int argc, char *argv[])
                   "</container>");
     if (!Cover.isEmpty()) {
         Zippy::ZipEntryData jpg;
-        loadCover(Cover, jpg);
+        EPUB::loadCover(EPUB::Cover, jpg);
         arch.AddEntry("OEBPS/images/Cover.jpg", jpg);
         arch.AddEntry("OEBPS/Cover.xhtml",
                       "<?xml version=\"1.0\" encoding=\"utf-8\"?>"
@@ -399,7 +399,7 @@ int main(int argc, char *argv[])
     }
     if (!Cover.isEmpty()) {
         Zippy::ZipEntryData jpg;
-        loadCover(Cover, jpg);
+        loadCover(EPUB::Cover, jpg);
         arch.AddEntry("OEBPS/images/Cover.jpg", jpg);
         arch.AddEntry("OEBPS/Cover.xhtml",
                       "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
@@ -489,10 +489,10 @@ int main(int argc, char *argv[])
                    "        <item id=\"style\" href=\"stylesheet.css\" media-type=\"text/css\" />\n"
                    "        <item id=\"pagetemplate\" href=\"page-template.xpgt\" media-type=\"application/vnd.adobe-page-template+xml\" />\n"
                    "        <item id=\"cover_html\" href=\"Cover.xhtml\" media-type=\"application/xhtml+xml\" />\n" +
-                   chapterManifest(book) +
+                   EPUB::chapterManifest(book) +
                    "    </manifest>\n"
                    "    <spine toc=\"ncx\">\n" +
-                   spineTOC(book) +
+                   EPUB::spineTOC(book) +
                    "    </spine>\n"
                    "</package>").toStdString().c_str());
     arch.AddEntry("OEBPS/toc.ncx",
@@ -508,14 +508,14 @@ int main(int argc, char *argv[])
                    "       <text>" + Name + "</text>\n"
                    "   </docTitle>\n"
                    "   <navMap>" +
-                   navPoints(book) +
+                   EPUB::navPoints(book) +
                    "   </navMap>\n"
                    "</ncx>").toStdString().c_str());
-    int len = chapterNumWidth(book);
+    int len = EPUB::chapterNumWidth(book);
     for (int i = 1; i <= book.length(); ++i) {
         char name[1024];
         sprintf(name, "OEBPS/chap%0*d.xhtml", len, i);
-        arch.AddEntry(name, convertHTML(book[i - 1]._html, book[i - 1]._name).toStdString().c_str());
+        arch.AddEntry(name, EPUB::convertHTML(book[i - 1]._html, book[i - 1]._name).toStdString().c_str());
     }
     arch.Save();
     arch.Close();

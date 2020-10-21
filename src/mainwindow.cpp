@@ -748,7 +748,7 @@ static QString buildExportName(QString ext)
     QTreeWidgetItem* rootItem = tree->topLevelItem(0);
     int idx = rootItem->data(0, Qt::ItemDataRole::UserRole).toInt();
     if (MainWindow::getMainWindow()->Scenes()[idx]._name == "") if (!MainWindow::getMainWindow()->saveAs()) return "";
-    QString file = _dir + "/" + MainWindow::getMainWindow()->Scenes()[idx]._name;
+    QString file = MainWindow::getMainWindow()->Dir() + "/" + MainWindow::getMainWindow()->Scenes()[idx]._name;
     return "\"" + file + ext + "\"";
 }
 #endif
@@ -757,13 +757,16 @@ void MainWindow::epubAction()
 {
 #ifdef Q_OS_MACOS
     std::string x = buildExportName(".novel").toStdString();
-    const char* argv1 = x.c_str();
+    char* argv1 = (char*) x.c_str();
     std::string y = buildExportName(".epub").toStdString();
-    const char* argv2 = y.c_str();
-    const char* argv[3] = { "EPUB", argv1, argv2 };
-    EPUB::main(3, argv);
-#endif
+    char* argv2 = (char*) y.c_str();
+    std::string n = "EPUB";
+    char* name = (char*) n.c_str();
+    char* argv[3] = { name, argv1, argv2 };
+    EPUB::main(3, &argv[0]);
+#else
     exportAs("EPUB");
+#endif
 }
 
 void MainWindow::fileShowAction()
@@ -1135,10 +1138,12 @@ void MainWindow::odfAction()
 {
 #ifdef Q_OS_MACOS
     std::string x = buildExportName(".novel").toStdString();
-    const char* argv1 = x.c_str();
+    char* argv1 = (char*) x.c_str();
     std::string y = buildExportName(".odf").toStdString();
-    const char* argv2 = y.c_str();
-    const char* argv[3] = { "ODF", argv1, argv2 };
+    char* argv2 = (char*) y.c_str();
+    std::string n = "ODF";
+    char* name = (char*) n.c_str();
+    char* argv[3] = { name, argv1, argv2 };
     ODF::main(3, argv);
 #else
     exportAs("ODT");
@@ -1182,10 +1187,12 @@ void MainWindow::pdfAction()
 {
 #ifdef Q_OS_MACOS
     std::string x = buildExportName(".novel").toStdString();
-    const char* argv1 = x.c_str();
+    char* argv1 = (char*) x.c_str();
     std::string y = buildExportName(".pdf").toStdString();
-    const char* argv2 = y.c_str();
-    const char* argv[3] = { "PDF", argv1, argv2 };
+    char* argv2 = (char*) y.c_str();
+    std::string n = "PDF";
+    char* name = (char*) n.c_str();
+    char* argv[3] = { name, argv1, argv2 };
     PDF::main(3, argv);
 #else
     exportAs("PDF");
@@ -1332,10 +1339,12 @@ void MainWindow::textAction()
 {
 #ifdef Q_OS_MACOS
     std::string x = buildExportName(".novel").toStdString();
-    const char* argv1 = x.c_str();
+    char* argv1 = (char*) x.c_str();
     std::string y = buildExportName(".pdf").toStdString();
-    const char* argv2 = y.c_str();
-    const char* argv[3] = { "PDF", argv1, argv2 };
+    char* argv2 = (char*) y.c_str();
+    std::string n = "TEXT";
+    char* name = (char*) n.c_str();
+    char* argv[3] = { name, argv1, argv2 };
     TEXT::main(3, argv);
 #else
     exportAs("TXT");

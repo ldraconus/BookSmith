@@ -27,149 +27,147 @@ namespace ODF {
     struct Tree {
         Scene _top;
     };
-}
 
-static QString _dir;
-static ODF::Tree tree;
+    static QString _dir;
+    static Tree tree;
 
-static ODF::Scene objectToScene(const QJsonObject& obj)
-{
-    ODF::Scene scene;
-    scene._html = obj["doc"].toString("");
-    const QJsonArray& tags = obj["tags"].toArray();
-    for (auto tag: tags) scene._tags.append(tag.toString(""));
-    return scene;
-}
-
-static ODF::Scene objectToItem(const QJsonObject& obj)
-{
-    ODF::Scene scene = objectToScene(obj);
-    const QJsonArray& children = obj["children"].toArray();
-    for (auto child: children) scene._children.append(objectToItem(child.toObject()));
-    return scene;
-}
-
-static bool open(QString filename)
-{
-    int ext = filename.lastIndexOf(".novel");
-    if (ext != -1) filename = filename.left(ext);
-    int sep = filename.lastIndexOf("/");
-    if (sep != -1) {
-        _dir = filename.left(sep + 1);
-        filename = filename.mid(sep + 1);
-    }
-    sep = filename.lastIndexOf("\\");
-    if (sep != -1) {
-        _dir = filename.left(sep + 1);
-        filename = filename.mid(sep + 1);
+    static Scene objectToScene(const QJsonObject& obj)
+    {
+        Scene scene;
+        scene._html = obj["doc"].toString("");
+        const QJsonArray& tags = obj["tags"].toArray();
+        for (auto tag: tags) scene._tags.append(tag.toString(""));
+        return scene;
     }
 
-    QFile file(_dir + "/" + filename + ".novel");
-    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) return false;
-    QByteArray data(file.readAll());
-    QString jsonStr(data);
-    file.close();
-    QJsonDocument json = QJsonDocument::fromJson(jsonStr.toUtf8());
+    static Scene objectToItem(const QJsonObject& obj)
+    {
+        Scene scene = objectToScene(obj);
+        const QJsonArray& children = obj["children"].toArray();
+        for (auto child: children) scene._children.append(objectToItem(child.toObject()));
+        return scene;
+    }
 
-    const QJsonObject& top = json.object();
-    if (!top.contains("document")) return false;
+    static bool open(QString filename)
+    {
+        int ext = filename.lastIndexOf(".novel");
+        if (ext != -1) filename = filename.left(ext);
+        int sep = filename.lastIndexOf("/");
+        if (sep != -1) {
+            _dir = filename.left(sep + 1);
+            filename = filename.mid(sep + 1);
+        }
+        sep = filename.lastIndexOf("\\");
+        if (sep != -1) {
+            _dir = filename.left(sep + 1);
+            filename = filename.mid(sep + 1);
+        }
 
-    const QJsonObject& doc = top["document"].toObject();
-    const QJsonObject& root = doc["root"].toObject();
-    tree._top = objectToItem(root);
+        QFile file(_dir + "/" + filename + ".novel");
+        if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) return false;
+        QByteArray data(file.readAll());
+        QString jsonStr(data);
+        file.close();
+        QJsonDocument json = QJsonDocument::fromJson(jsonStr.toUtf8());
 
-    return true;
-}
+        const QJsonObject& top = json.object();
+        if (!top.contains("document")) return false;
 
-static QString Cover;
+        const QJsonObject& doc = top["document"].toObject();
+        const QJsonObject& root = doc["root"].toObject();
+        tree._top = objectToItem(root);
 
-static bool recognizeTag(const QList<QString>& tags, const QString& tag)
-{
-    return (tags.indexOf(tag) != -1 ||
-            tags.indexOf(tag.left(1).toUpper() + tag.right(tag.length() - 1)) != -1 ||
-            tags.indexOf(tag.toUpper()) != -1);
-}
-
-static bool SaveStringByTag(const QList<QString>& tags, QString& where, QString tag, const QString& html)
-{
-    if (recognizeTag(tags, tag)) {
-        QTextEdit edit;
-        edit.setHtml(html);
-        where = edit.toPlainText();
         return true;
     }
-    return false;
-}
 
-static void sceneToDocument(QTextEdit& edit, const ODF::Scene& scene)
-{
-    QTextEdit temp;
-    if (!SaveStringByTag(scene._tags, Cover, "cover", scene._html)) {
-        if (recognizeTag(scene._tags, "chapter")) {
-            temp.setHtml(scene._html);
-            QTextCursor cursor = temp.textCursor();
+    static QString Cover;
+
+    static bool recognizeTag(const QList<QString>& tags, const QString& tag)
+    {
+        return (tags.indexOf(tag) != -1 ||
+                tags.indexOf(tag.left(1).toUpper() + tag.right(tag.length() - 1)) != -1 ||
+                tags.indexOf(tag.toUpper()) != -1);
+    }
+
+    static bool SaveStringByTag(const QList<QString>& tags, QString& where, QString tag, const QString& html)
+    {
+        if (recognizeTag(tags, tag)) {
+            QTextEdit edit;
+            edit.setHtml(html);
+            where = edit.toPlainText();
+            return true;
+        }
+        return false;
+    }
+
+    static void sceneToDocument(QTextEdit& edit, const Scene& scene)
+    {
+        QTextEdit temp;
+        if (!SaveStringByTag(scene._tags, Cover, "cover", scene._html)) {
+            if (recognizeTag(scene._tags, "chapter")) {
+                temp.setHtml(scene._html);
+                QTextCursor cursor = temp.textCursor();
+                cursor.setPosition(0);
+                temp.setTextCursor(cursor);
+                cursor = temp.textCursor();
+                QTextBlockFormat blk = cursor.blockFormat();
+                blk.setPageBreakPolicy(QTextFormat::PageBreak_AlwaysBefore);
+                cursor.mergeBlockFormat(blk);
+                temp.setTextCursor(cursor);
+            }
+            else if (recognizeTag(scene._tags, "scene")) temp.setHtml(scene._html);
+            temp.selectAll();
+            if (temp.textCursor().selectedText().length() != 0) {
+                temp.cut();
+                edit.paste();
+                edit.insertPlainText("\r\n");
+            }
+        }
+        for (const auto& scn: scene._children) sceneToDocument(edit, scn);
+    }
+
+    static void insertCover(QTextEdit& edit) {
+        if (!Cover.isEmpty()) {
+            QTextDocumentFragment fragment;
+            fragment = QTextDocumentFragment::fromHtml("<img height=\"803\" width=\"621\" src='file:///" + Cover + "'>");
+            QTextCursor cursor  = edit.textCursor();
             cursor.setPosition(0);
-            temp.setTextCursor(cursor);
-            cursor = temp.textCursor();
+            edit.setTextCursor(cursor);
             QTextBlockFormat blk = cursor.blockFormat();
-            blk.setPageBreakPolicy(QTextFormat::PageBreak_AlwaysBefore);
+            blk.setPageBreakPolicy(QTextFormat::PageBreak_AlwaysAfter);
+            edit.setTextCursor(cursor);
+            edit.textCursor().insertFragment(fragment);
             cursor.mergeBlockFormat(blk);
-            temp.setTextCursor(cursor);
-        }
-        else if (recognizeTag(scene._tags, "scene")) temp.setHtml(scene._html);
-        temp.selectAll();
-        if (temp.textCursor().selectedText().length() != 0) {
-            temp.cut();
-            edit.paste();
-            edit.insertPlainText("\r\n");
         }
     }
-    for (const auto& scn: scene._children) sceneToDocument(edit, scn);
-}
 
-static void insertCover(QTextEdit& edit) {
-    if (!Cover.isEmpty()) {
-        QTextDocumentFragment fragment;
-        fragment = QTextDocumentFragment::fromHtml("<img height=\"803\" width=\"621\" src='file:///" + Cover + "'>");
-        QTextCursor cursor  = edit.textCursor();
-        cursor.setPosition(0);
-        edit.setTextCursor(cursor);
-        QTextBlockFormat blk = cursor.blockFormat();
-        blk.setPageBreakPolicy(QTextFormat::PageBreak_AlwaysAfter);
-        edit.setTextCursor(cursor);
-        edit.textCursor().insertFragment(fragment);
-        cursor.mergeBlockFormat(blk);
+    static void novelToDocument(QTextEdit& edit, Tree& tree)
+    {
+        sceneToDocument(edit, tree._top);
+        insertCover(edit);
     }
-}
-
-static void novelToDocument(QTextEdit& edit, ODF::Tree& tree)
-{
-    sceneToDocument(edit, tree._top);
-    insertCover(edit);
 }
 
 #ifdef Q_OS_MACOS
 namespace ODF {
 #endif
+    int main(int argc, char *argv[])
+    {
+        QApplication a(argc, argv);
 
-int main(int argc, char *argv[])
-{
-    QApplication a(argc, argv);
+        if (argc != 3) return -1;
 
-    if (argc != 3) return -1;
+        if (!open(argv[1])) return -1;
 
-    if (!open(argv[1])) return -1;
+        QTextEdit edit;
+        ODF::novelToDocument(edit, tree);
+        QTextDocument* document = edit.document();
+        QTextDocumentWriter writer(argv[2]);
+        writer.setFormat("ODF");
+        writer.write(document);
 
-    QTextEdit edit;
-    novelToDocument(edit, tree);
-    QTextDocument* document = edit.document();
-    QTextDocumentWriter writer(argv[2]);
-    writer.setFormat("ODF");
-    writer.write(document);
-
-    return 0;
-}
-
+        return 0;
+    }
 #ifdef Q_OS_MACOS
 }
 #endif

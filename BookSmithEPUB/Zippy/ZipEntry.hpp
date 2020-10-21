@@ -32,7 +32,11 @@
 #include <iostream>
 
 // ===== Other Includes
+#ifdef Q_OS_MACOS
+#include "../BookSmithEPUB/Zippy/ZipUtilities.hpp"
+#else
 #include "Zippy/ZipUtilities.hpp"
+#endif
 #include "miniz/miniz.h"
 
 namespace Zippy
