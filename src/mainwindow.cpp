@@ -123,12 +123,12 @@ void MainWindow::Search::init(FindDialog::type r)
 }
 
 
-MainWindow::Search::Search(QString& l, FindDialog::type r): _look(l), _with(""), _wrapped(false)
+MainWindow::Search::Search(QString& l, FindDialog::type r): _look(l), _with("")
 {
     init(r);
 }
 
-MainWindow::Search::Search(QString& l, FindDialog::type r, QString& w): _look(l), _with(w), _wrapped(false)
+MainWindow::Search::Search(QString& l, FindDialog::type r, QString& w): _look(l), _with(w)
 {
     init(r);
 }
