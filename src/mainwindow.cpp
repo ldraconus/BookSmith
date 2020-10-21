@@ -257,33 +257,34 @@ MainWindow::MainWindow(const QString& file, QWidget *parent) :
     connect(findChild<QMenu*>("menuEdit"),  SIGNAL(aboutToShow()), this, SLOT(editShowAction()));
 
     _exeDir = QFileInfo(QCoreApplication::applicationFilePath()).absolutePath();
+    _baseDir = _exeDir;
 
 #ifdef Q_OS_MACOS
     // take three dirs off _exeDir
     int pos;
-    for (int i = 0; i < 3 && (pos = _exeDir.lastIndexOf("/")) != -1; ++i) _exeDir = _exeDir.left(pos);
+    for (int i = 0; i < 3 && (pos = _baseDir.lastIndexOf("/")) != -1; ++i) _baseDir = _baseDir.left(pos);
 #endif
 
     QToolBar* toolbar = findChild<QToolBar*>("mainToolBar");
-    createToolBarItem(toolbar, _exeDir + "/gfx/blank-file-16.ico",                      "New",        "New Book (Ctrl-N)",       SIGNAL(triggered()), SLOT(newAction()));
-    createToolBarItem(toolbar, _exeDir + "/gfx/folder-3-16.ico",                        "Open",       "Open Book (Ctrl-O)",      SIGNAL(triggered()), SLOT(openAction()));
-    createToolBarItem(toolbar, _exeDir + "/gfx/downloads-16.ico",                       "Save",       "Save Book (Ctrl-S)",      SIGNAL(triggered()), SLOT(saveAction()));
+    createToolBarItem(toolbar, _baseDir + "/gfx/blank-file-16.ico",                      "New",        "New Book (Ctrl-N)",       SIGNAL(triggered()), SLOT(newAction()));
+    createToolBarItem(toolbar, _baseDir + "/gfx/folder-3-16.ico",                        "Open",       "Open Book (Ctrl-O)",      SIGNAL(triggered()), SLOT(openAction()));
+    createToolBarItem(toolbar, _baseDir + "/gfx/downloads-16.ico",                       "Save",       "Save Book (Ctrl-S)",      SIGNAL(triggered()), SLOT(saveAction()));
     toolbar->addSeparator();
-    createToolBarItem(toolbar, _exeDir + "/gfx/bold-16.ico",                            "Bold",       "Bold Text (Ctrl-B)",      SIGNAL(triggered()), SLOT(boldAction()));
-    createToolBarItem(toolbar, _exeDir + "/gfx/italic-16.ico",                          "Italic",     "Italic Text (Ctrl-I)",    SIGNAL(triggered()), SLOT(italicAction()));
-    createToolBarItem(toolbar, _exeDir + "/gfx/Icons8-Windows-8-Editing-Underline.ico", "Underline",  "Underline Text (Ctrl-U)", SIGNAL(triggered()), SLOT(underlineAction()));
+    createToolBarItem(toolbar, _baseDir + "/gfx/bold-16.ico",                            "Bold",       "Bold Text (Ctrl-B)",      SIGNAL(triggered()), SLOT(boldAction()));
+    createToolBarItem(toolbar, _baseDir + "/gfx/italic-16.ico",                          "Italic",     "Italic Text (Ctrl-I)",    SIGNAL(triggered()), SLOT(italicAction()));
+    createToolBarItem(toolbar, _baseDir + "/gfx/Icons8-Windows-8-Editing-Underline.ico", "Underline",  "Underline Text (Ctrl-U)", SIGNAL(triggered()), SLOT(underlineAction()));
     toolbar->addSeparator();
-    createToolBarItem(toolbar, _exeDir + "/gfx/alignment+left+text+icon_16.ico",        "Left",       "Left Text (Alt-L)",       SIGNAL(triggered()), SLOT(leftAction()));
-    createToolBarItem(toolbar, _exeDir + "/gfx/alignment+center+text+icon_16.ico",      "Center",     "Center Text (Alt-C)",     SIGNAL(triggered()), SLOT(centerAction()));
-    createToolBarItem(toolbar, _exeDir + "/gfx/alignment+right+text+icon_16.ico",       "Right",      "Right Text (Alt-R)",      SIGNAL(triggered()), SLOT(rightAction()));
-    createToolBarItem(toolbar, _exeDir + "/gfx/alignment+justify+text+icon_16.ico",     "Justify",    "Justify Text (Alt-J)",    SIGNAL(triggered()), SLOT(fullJustifyAction()));
+    createToolBarItem(toolbar, _baseDir + "/gfx/alignment+left+text+icon_16.ico",        "Left",       "Left Text (Alt-L)",       SIGNAL(triggered()), SLOT(leftAction()));
+    createToolBarItem(toolbar, _baseDir + "/gfx/alignment+center+text+icon_16.ico",      "Center",     "Center Text (Alt-C)",     SIGNAL(triggered()), SLOT(centerAction()));
+    createToolBarItem(toolbar, _baseDir + "/gfx/alignment+right+text+icon_16.ico",       "Right",      "Right Text (Alt-R)",      SIGNAL(triggered()), SLOT(rightAction()));
+    createToolBarItem(toolbar, _baseDir + "/gfx/alignment+justify+text+icon_16.ico",     "Justify",    "Justify Text (Alt-J)",    SIGNAL(triggered()), SLOT(fullJustifyAction()));
     toolbar->addSeparator();
-    createToolBarItem(toolbar, _exeDir + "/gfx/format+indent+increase_16.ico",          "Indent",     "Indent (Alt-])",          SIGNAL(triggered()), SLOT(indentAction()));
-    createToolBarItem(toolbar, _exeDir + "/gfx/format+indent+decrease16.ico",           "Outdent",    "Outdent (Alt-[)",         SIGNAL(triggered()), SLOT(outdentAction()));
+    createToolBarItem(toolbar, _baseDir + "/gfx/format+indent+increase_16.ico",          "Indent",     "Indent (Alt-])",          SIGNAL(triggered()), SLOT(indentAction()));
+    createToolBarItem(toolbar, _baseDir + "/gfx/format+indent+decrease16.ico",           "Outdent",    "Outdent (Alt-[)",         SIGNAL(triggered()), SLOT(outdentAction()));
     toolbar->addSeparator();
-    createToolBarItem(toolbar, _exeDir + "/gfx/fullscreen_16.ico",                      "Fullscreen", "Full Screen (F11)",       SIGNAL(triggered()), SLOT(fullScreenAction()));
+    createToolBarItem(toolbar, _baseDir + "/gfx/fullscreen_16.ico",                      "Fullscreen", "Full Screen (F11)",       SIGNAL(triggered()), SLOT(fullScreenAction()));
 
-    QApplication::setWindowIcon(QIcon(_exeDir + "/gfx/BookSmith.ico"));
+    QApplication::setWindowIcon(QIcon(_baseDir + "/gfx/BookSmith.ico"));
 
     QSplitter* splitter = findChild<QSplitter*>("splitter");
     QSize mainSize = size();
@@ -875,7 +876,7 @@ void MainWindow::fullScreenAction()
 
 void MainWindow::helpAction()
 {
-    HelpDialog help(_exeDir);
+    HelpDialog help(_baseDir);
     help.show();
     help.exec();
 
@@ -1093,12 +1094,14 @@ void MainWindow::exportAs(QString type)
     QString file = _dir + "/" + _scenes[idx]._name;
     QString input = "\"" + file + ".novel\"";
     QString output = "\"" + file + "." + type.toLower() + "\"";
-#ifdef Q_OS_MACOS
-    QString exe = ".app";
-#else
+
+#ifdef Q_OS_WIN32
     QString exe = ".exe";
+#else
+    QString exe = "";
 #endif
-    QString command = (_exeDir + "/BookSmith" + type + exe + input + " " + output);
+
+    QString command = (_exeDir + "/BookSmith" + type + exe + " " + input + " " + output);
     command = slashToBackslash(command);
 
     if (system(command.toStdString().c_str()) < 0) Util::OK("Unable to export as " + type + ".\nMaybe reinstall BookSmith?");

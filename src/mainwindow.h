@@ -104,7 +104,6 @@ public:
         QString _look;
         QString _with;
         FindDialog::type _range;
-        bool _wrapped;
         Position _current;
         Position _start;
         Position _stop;
@@ -129,6 +128,7 @@ private:
     QLabel* _wcLabel;
     QString _dir;
     QString _exeDir;
+    QString _baseDir;
     int _dirty;
     int _totalWc;
     Fullscreen _fullscreen;
