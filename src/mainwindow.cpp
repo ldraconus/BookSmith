@@ -123,12 +123,12 @@ void MainWindow::Search::init(FindDialog::type r)
 }
 
 
-MainWindow::Search::Search(QString& l, FindDialog::type r): _look(l), _with(""), _wrapped(false)
+MainWindow::Search::Search(QString& l, FindDialog::type r): _look(l), _with("")
 {
     init(r);
 }
 
-MainWindow::Search::Search(QString& l, FindDialog::type r, QString& w): _look(l), _with(w), _wrapped(false)
+MainWindow::Search::Search(QString& l, FindDialog::type r, QString& w): _look(l), _with(w)
 {
     init(r);
 }
@@ -1093,7 +1093,12 @@ void MainWindow::exportAs(QString type)
     QString file = _dir + "/" + _scenes[idx]._name;
     QString input = "\"" + file + ".novel\"";
     QString output = "\"" + file + "." + type.toLower() + "\"";
-    QString command = (_exeDir + "/BookSmith" + type + ".exe " + input + " " + output);
+#ifdef Q_OS_MACOS
+    QString exe = ".app";
+#else
+    QString exe = ".exe";
+#endif
+    QString command = (_exeDir + "/BookSmith" + type + exe + input + " " + output);
     command = slashToBackslash(command);
 
     if (system(command.toStdString().c_str()) < 0) Util::OK("Unable to export as " + type + ".\nMaybe reinstall BookSmith?");
