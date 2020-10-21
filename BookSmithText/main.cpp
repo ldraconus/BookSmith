@@ -114,7 +114,7 @@ static void novelToDocument(QTextEdit& edit, TEXT::Tree& tree)
 }
 
 #ifdef Q_OS_MACOS
-namepsace TEXT {
+namespace TEXT {
 #endif
 int main(int argc, char *argv[])
 {
