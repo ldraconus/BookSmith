@@ -739,8 +739,30 @@ void MainWindow::editShowAction()
     outdentAction->setEnabled(blk.indent() != 0);
 }
 
+#ifdef Q_OS_MACOS
+#include "../BookSmithEPUB/main.cpp"
+
+static QString buildExportName(QString ext)
+{
+    QTreeWidget* tree = MainWindow::getMainWindow()->findChild<QTreeWidget*>("treeWidget");
+    QTreeWidgetItem* rootItem = tree->topLevelItem(0);
+    int idx = rootItem->data(0, Qt::ItemDataRole::UserRole).toInt();
+    if (MainWindow::getMainWindow()->Scenes()[idx]._name == "") if (!MainWindow::getMainWindow()->saveAs()) return "";
+    QString file = _dir + "/" + MainWindow::getMainWindow()->Scenes()[idx]._name;
+    return "\"" + file + ext + "\"";
+}
+#endif
+
 void MainWindow::epubAction()
 {
+#ifdef Q_OS_MACOS
+    std::string x = buildExportName(".novel").toStdString();
+    const char* argv1 = x.c_str();
+    std::string y = buildExportName(".epub").toStdString();
+    const char* argv2 = y.c_str();
+    const char* argv[3] = { "EPUB", argv1, argv2 };
+    EPUB::main(3, argv);
+#endif
     exportAs("EPUB");
 }
 
@@ -1080,7 +1102,6 @@ static QString slashToBackslash(QString file)
     result += file;
     return result;
 }
-#endif
 
 void MainWindow::exportAs(QString type)
 {
@@ -1097,25 +1118,31 @@ void MainWindow::exportAs(QString type)
     QString input = "\"" + file + ".novel\"";
     QString output = "\"" + file + "." + type.toLower() + "\"";
 
-#ifdef Q_OS_WIN32
     QString exe = ".exe";
-#else
-    QString exe = "";
-#endif
 
     QString command = (_exeDir + "/BookSmith" + type + exe + " " + input + " " + output);
-#ifdef Q_OS_WIN32
     command = slashToBackslash(command);
-#endif
-
-Util::Statement("command = \"" + command + "\"");
 
     if (system(command.toStdString().c_str()) < 0) Util::OK("Unable to export as " + type + ".\nMaybe reinstall BookSmith?");
 }
+#endif
+
+#ifdef Q_OS_MACOS
+#include "../BookSmithODF/main.cpp"
+#endif
 
 void MainWindow::odfAction()
 {
+#ifdef Q_OS_MACOS
+    std::string x = buildExportName(".novel").toStdString();
+    const char* argv1 = x.c_str();
+    std::string y = buildExportName(".odf").toStdString();
+    const char* argv2 = y.c_str();
+    const char* argv[3] = { "ODF", argv1, argv2 };
+    ODF::main(3, argv);
+#else
     exportAs("ODT");
+#endif
 }
 
 void MainWindow::outdentAction()
@@ -1147,9 +1174,22 @@ void MainWindow::pasteAction()
     }
 }
 
+#ifdef Q_OS_MACOS
+#include "../BookSmithPDF/src/main.cpp"
+#endif
+
 void MainWindow::pdfAction()
 {
+#ifdef Q_OS_MACOS
+    std::string x = buildExportName(".novel").toStdString();
+    const char* argv1 = x.c_str();
+    std::string y = buildExportName(".pdf").toStdString();
+    const char* argv2 = y.c_str();
+    const char* argv[3] = { "PDF", argv1, argv2 };
+    PDF::main(3, argv);
+#else
     exportAs("PDF");
+#endif
 }
 
 void MainWindow::replaceAction()
@@ -1284,9 +1324,22 @@ void MainWindow::sceneShowAction()
     moveOutAction->setEnabled(parent != nullptr && parent->parent() != nullptr);
 }
 
+#ifdef Q_OS_MACOS
+#include "../BookSmithText/main.cpp"
+#endif
+
 void MainWindow::textAction()
 {
+#ifdef Q_OS_MACOS
+    std::string x = buildExportName(".novel").toStdString();
+    const char* argv1 = x.c_str();
+    std::string y = buildExportName(".pdf").toStdString();
+    const char* argv2 = y.c_str();
+    const char* argv[3] = { "PDF", argv1, argv2 };
+    TEXT::main(3, argv);
+#else
     exportAs("TXT");
+#endif
 }
 
 static int countWords(QString x)

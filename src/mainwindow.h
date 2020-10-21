@@ -155,6 +155,9 @@ private:
 
     virtual void keyReleaseEvent(QKeyEvent *e);
 
+public:
+    QList<Scene>& Scenes() { return _scenes; }
+
 public slots:
     void aboutAction();
     void boldAction();

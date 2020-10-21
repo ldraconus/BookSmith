@@ -12,36 +12,38 @@
 #include <QJsonObject>
 #include <QJsonArray>
 
-struct Scene {
-    QList<QString> _tags;
-    QString _html;
-    QList<struct Scene> _children;
+namespace ODF {
+    struct Scene {
+        QList<QString> _tags;
+        QString _html;
+        QList<struct Scene> _children;
 
-    Scene(): _html("") { }
-    Scene(const Scene& s): _tags(s._tags), _html(s._html), _children(s._children) { }
+        Scene(): _html("") { }
+        Scene(const Scene& s): _tags(s._tags), _html(s._html), _children(s._children) { }
 
-    Scene& operator=(const Scene& s) { if (this != &s) { _tags = s._tags; _html = s._html; _children = s._children; } return *this; }
-};
+        Scene& operator=(const Scene& s) { if (this != &s) { _tags = s._tags; _html = s._html; _children = s._children; } return *this; }
+    };
 
-struct Tree {
-    Scene _top;
-};
+    struct Tree {
+        Scene _top;
+    };
+}
 
 static QString _dir;
-static Tree tree;
+static ODF::Tree tree;
 
-static Scene objectToScene(const QJsonObject& obj)
+static ODF::Scene objectToScene(const QJsonObject& obj)
 {
-    Scene scene;
+    ODF::Scene scene;
     scene._html = obj["doc"].toString("");
     const QJsonArray& tags = obj["tags"].toArray();
     for (auto tag: tags) scene._tags.append(tag.toString(""));
     return scene;
 }
 
-static Scene objectToItem(const QJsonObject& obj)
+static ODF::Scene objectToItem(const QJsonObject& obj)
 {
-    Scene scene = objectToScene(obj);
+    ODF::Scene scene = objectToScene(obj);
     const QJsonArray& children = obj["children"].toArray();
     for (auto child: children) scene._children.append(objectToItem(child.toObject()));
     return scene;
@@ -99,7 +101,7 @@ static bool SaveStringByTag(const QList<QString>& tags, QString& where, QString 
     return false;
 }
 
-static void sceneToDocument(QTextEdit& edit, const Scene& scene)
+static void sceneToDocument(QTextEdit& edit, const ODF::Scene& scene)
 {
     QTextEdit temp;
     if (!SaveStringByTag(scene._tags, Cover, "cover", scene._html)) {
@@ -140,11 +142,15 @@ static void insertCover(QTextEdit& edit) {
     }
 }
 
-static void novelToDocument(QTextEdit& edit, Tree& tree)
+static void novelToDocument(QTextEdit& edit, ODF::Tree& tree)
 {
     sceneToDocument(edit, tree._top);
     insertCover(edit);
 }
+
+#ifdef Q_OS_MACOS
+namespace ODF {
+#endif
 
 int main(int argc, char *argv[])
 {
@@ -163,3 +169,7 @@ int main(int argc, char *argv[])
 
     return 0;
 }
+
+#ifdef Q_OS_MACOS
+}
+#endif

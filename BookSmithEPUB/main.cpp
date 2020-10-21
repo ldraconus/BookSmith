@@ -15,28 +15,30 @@
 #include <QJsonArray>
 #include <QUuid>
 
-struct Scene {
-    QList<QString> _tags;
-    QString _html;
-    QString _name;
-    QList<struct Scene> _children;
+namespace EPUB {
+    struct Scene {
+        QList<QString> _tags;
+        QString _html;
+        QString _name;
+        QList<struct Scene> _children;
 
-    Scene(): _html(""), _name("") { }
-    Scene(const Scene& s): _tags(s._tags), _html(s._html), _name(s._name), _children(s._children) { }
+        Scene(): _html(""), _name("") { }
+        Scene(const Scene& s): _tags(s._tags), _html(s._html), _name(s._name), _children(s._children) { }
 
-    Scene& operator=(const Scene& s) { if (this != &s) { _tags = s._tags; _html = s._html; _name = s._name; _children = s._children; } return *this; }
-};
+        Scene& operator=(const Scene& s) { if (this != &s) { _tags = s._tags; _html = s._html; _name = s._name; _children = s._children; } return *this; }
+    };
 
-struct Tree {
-    Scene _top;
-};
+    struct Tree {
+        Scene _top;
+    };
+}
 
 static QString _dir;
-static Tree tree;
+static EPUB::Tree tree;
 
-static Scene objectToScene(const QJsonObject& obj)
+static EPUB::Scene objectToScene(const QJsonObject& obj)
 {
-    Scene scene;
+    EPUB::Scene scene;
     scene._html = obj["doc"].toString("");
     scene._name = obj["name"].toString("");
     const QJsonArray& tags = obj["tags"].toArray();
@@ -44,9 +46,9 @@ static Scene objectToScene(const QJsonObject& obj)
     return scene;
 }
 
-static Scene objectToItem(const QJsonObject& obj)
+static EPUB::Scene objectToItem(const QJsonObject& obj)
 {
-    Scene scene = objectToScene(obj);
+    EPUB::Scene scene = objectToScene(obj);
     const QJsonArray& children = obj["children"].toArray();
     for (auto child: children) scene._children.append(objectToItem(child.toObject()));
     return scene;
@@ -123,7 +125,7 @@ static bool SaveStringByTag(const QList<QString>& tags, QString& where, QString 
     return false;
 }
 
-static void sceneToDocument(QList<Chapter>& book, QTextEdit& edit, const Scene& scene)
+static void sceneToDocument(QList<Chapter>& book, QTextEdit& edit, const EPUB::Scene& scene)
 {
     if (!SaveStringByTag(scene._tags, Cover, "cover", scene._html) &&
         !SaveStringByTag(scene._tags, Author, "author", scene._html) &&
@@ -151,7 +153,7 @@ static void sceneToDocument(QList<Chapter>& book, QTextEdit& edit, const Scene& 
     for (const auto& scn: scene._children) sceneToDocument(book, edit, scn);
 }
 
-static void novelToDocument(QList<Chapter>& book, Tree& tree)
+static void novelToDocument(QList<Chapter>& book, EPUB::Tree& tree)
 {
     QTextEdit edit;
     Name = tree._top._name;
@@ -357,6 +359,9 @@ static void loadCover(const QString& name, Zippy::ZipEntryData& jpg)
 }
 #endif
 
+#ifdef Q_OS_MACOS
+namespace EPUB {
+#endif
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
@@ -516,3 +521,6 @@ int main(int argc, char *argv[])
     arch.Close();
     return 0;
 }
+#ifdef Q_OS_MACOS
+}
+#endif
