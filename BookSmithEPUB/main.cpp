@@ -368,10 +368,10 @@ int main(int argc, char *argv[])
 
     if (argc != 3) return -1;
 
-    if (!open(argv[1])) return -1;
+    if (!EPUB::open(argv[1])) return -1;
 
-    QList<Chapter> book;
-    EPUB::novelToDocument(book, tree);
+    QList<EPUB::Chapter> book;
+    EPUB::novelToDocument(book, EPUB::tree);
 
     // create the zip file from the book
     Zippy::ZipArchive arch;
@@ -384,7 +384,7 @@ int main(int argc, char *argv[])
                   "    <rootfile media-type=\"application/oebps-package+xml\" full-path=\"OEBPS/content.opf\"/>"
                   "  </rootfiles>"
                   "</container>");
-    if (!Cover.isEmpty()) {
+    if (!EPUB::Cover.isEmpty()) {
         Zippy::ZipEntryData jpg;
         EPUB::loadCover(EPUB::Cover, jpg);
         arch.AddEntry("OEBPS/images/Cover.jpg", jpg);
@@ -397,9 +397,9 @@ int main(int argc, char *argv[])
                       "   </body>\n"
                       "</html>");
     }
-    if (!Cover.isEmpty()) {
+    if (!EPUB::Cover.isEmpty()) {
         Zippy::ZipEntryData jpg;
-        loadCover(EPUB::Cover, jpg);
+        EPUB::loadCover(EPUB::Cover, jpg);
         arch.AddEntry("OEBPS/images/Cover.jpg", jpg);
         arch.AddEntry("OEBPS/Cover.xhtml",
                       "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
@@ -470,17 +470,17 @@ int main(int argc, char *argv[])
                   ".smcap    {font-variant: small-caps;}\n"
                   ".u        {text-decoration: underline;}\n"
                   ".bold     {font-weight: bold;}\n");
-    if (Id.isEmpty()) Id = QUuid::createUuid().toString(QUuid::WithoutBraces);
+    if (EPUB::Id.isEmpty()) EPUB::Id = QUuid::createUuid().toString(QUuid::WithoutBraces);
     arch.AddEntry("OEBPS/content.opf",
                   ("<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n"
                    "<package xmlns=\"http://www.idpf.org/2007/opf\" unique-identifier=\"BookID\" version=\"2.0\" >\n"
                    "    <metadata xmlns:dc=\"http://purl.org/dc/elements/1.1/\" xmlns:opf=\"http://www.idpf.org/2007/opf\">\n"
-                   "        <dc:title>" + Name + "</dc:title>\n"
-                   "        <dc:creator opf:role=\"aut\">" + Author + "</dc:creator>\n"
-                   "        <dc:language>" + Language + "</dc:language>\n"
-                   "        <dc:rights>" + Rights + "</dc:rights>\n"
-                   "        <dc:publisher>" + Publisher + "</dc:publisher>\n"
-                   "        <dc:identifier id=\"BookID\" opf:scheme=\"UUID\">" + Id +"</dc:identifier>\n"
+                   "        <dc:title>" + EPUB::Name + "</dc:title>\n"
+                   "        <dc:creator opf:role=\"aut\">" + EPUB::Author + "</dc:creator>\n"
+                   "        <dc:language>" + EPUB::Language + "</dc:language>\n"
+                   "        <dc:rights>" + EPUB::Rights + "</dc:rights>\n"
+                   "        <dc:publisher>" + EPUB::Publisher + "</dc:publisher>\n"
+                   "        <dc:identifier id=\"BookID\" opf:scheme=\"UUID\">" + EPUB::Id +"</dc:identifier>\n"
                    "        <meta name=\"cover\" content=\"images/Cover.jpg\" />"
                    "    </metadata>\n"
                    "    <manifest>\n"
@@ -499,13 +499,13 @@ int main(int argc, char *argv[])
                   ("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
                    "<ncx xmlns=\"http://www.daisy.org/z3986/2005/ncx/\" version=\"2005-1\">\n"
                    "   <head>\n"
-                   "       <meta name=\"dtb:uid\" content=\"" + Id + "\"/>\n"
+                   "       <meta name=\"dtb:uid\" content=\"" + EPUB::Id + "\"/>\n"
                    "       <meta name=\"dtb:depth\" content=\"1\"/>\n"
                    "       <meta name=\"dtb:totalPageCount\" content=\"0\"/>\n"
                    "       <meta name=\"dtb:maxPageNumber\" content=\"0\"/>\n"
                    "   </head>\n"
                    "   <docTitle>\n"
-                   "       <text>" + Name + "</text>\n"
+                   "       <text>" + EPUB::Name + "</text>\n"
                    "   </docTitle>\n"
                    "   <navMap>" +
                    EPUB::navPoints(book) +

@@ -157,10 +157,10 @@ namespace ODF {
 
         if (argc != 3) return -1;
 
-        if (!open(argv[1])) return -1;
+        if (!ODF::open(argv[1])) return -1;
 
         QTextEdit edit;
-        ODF::novelToDocument(edit, tree);
+        ODF::novelToDocument(edit, ODF::tree);
         QTextDocument* document = edit.document();
         QTextDocumentWriter writer(argv[2]);
         writer.setFormat("ODF");

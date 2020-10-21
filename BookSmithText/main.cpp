@@ -122,10 +122,10 @@ int main(int argc, char *argv[])
 
     if (argc != 3) return -1;
 
-    if (!open(argv[1])) return -1;
+    if (!TEXT::open(argv[1])) return -1;
 
     QTextEdit edit;
-    TEXT::novelToDocument(edit, tree);
+    TEXT::novelToDocument(edit, TEXT::tree);
     QTextDocument* document = edit.document();
     QTextDocumentWriter writer(argv[2]);
     writer.setFormat("Text");

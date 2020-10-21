@@ -157,14 +157,14 @@ int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
     if (argc != 3) return -1;
-    if (!open(argv[1])) return -1;
+    if (!PDF::open(argv[1])) return -1;
 
     QPrinter printer(QPrinter::PrinterResolution);
     printer.setOutputFormat(QPrinter::PdfFormat);
     printer.setOutputFileName(argv[2]);
 
     QTextEdit edit;
-    PDF::novelToDocument(edit, tree);
+    PDF::novelToDocument(edit, PDF::tree);
     QTextDocument* document = edit.document();
     document->print(&printer);
 
