@@ -115,10 +115,13 @@ namespace TEXT {
 
 #ifdef Q_OS_MACOS
 namespace TEXT {
-#endif
+int text(int argc, char *argv[])
+{
+#else
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
+#endif
 
     if (argc != 3) return -1;
 
@@ -128,7 +131,7 @@ int main(int argc, char *argv[])
     TEXT::novelToDocument(edit, TEXT::tree);
     QTextDocument* document = edit.document();
     QTextDocumentWriter writer(argv[2]);
-    writer.setFormat("Text");
+    writer.setFormat("plaintext");
     writer.write(document);
 
     return 0;
