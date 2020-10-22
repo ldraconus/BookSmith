@@ -749,7 +749,7 @@ static QString buildExportName(QString ext)
     int idx = rootItem->data(0, Qt::ItemDataRole::UserRole).toInt();
     if (MainWindow::getMainWindow()->Scenes()[idx]._name == "") if (!MainWindow::getMainWindow()->saveAs()) return "";
     QString file = MainWindow::getMainWindow()->Dir() + "/" + MainWindow::getMainWindow()->Scenes()[idx]._name;
-    return "\"" + file + ext + "\"";
+    return file + ext;
 }
 #endif
 
@@ -763,7 +763,7 @@ void MainWindow::epubAction()
     std::string n = "EPUB";
     char* name = (char*) n.c_str();
     char* argv[3] = { name, argv1, argv2 };
-    EPUB::main(3, &argv[0]);
+    EPUB::epub(3, &argv[0]);
 #else
     exportAs("EPUB");
 #endif
@@ -1144,7 +1144,7 @@ void MainWindow::odfAction()
     std::string n = "ODF";
     char* name = (char*) n.c_str();
     char* argv[3] = { name, argv1, argv2 };
-    ODF::main(3, argv);
+    ODF::odf(3, argv);
 #else
     exportAs("ODT");
 #endif
@@ -1193,7 +1193,7 @@ void MainWindow::pdfAction()
     std::string n = "PDF";
     char* name = (char*) n.c_str();
     char* argv[3] = { name, argv1, argv2 };
-    PDF::main(3, argv);
+    PDF::pdf(3, argv);
 #else
     exportAs("PDF");
 #endif
@@ -1340,12 +1340,12 @@ void MainWindow::textAction()
 #ifdef Q_OS_MACOS
     std::string x = buildExportName(".novel").toStdString();
     char* argv1 = (char*) x.c_str();
-    std::string y = buildExportName(".pdf").toStdString();
+    std::string y = buildExportName(".txt").toStdString();
     char* argv2 = (char*) y.c_str();
     std::string n = "TEXT";
     char* name = (char*) n.c_str();
     char* argv[3] = { name, argv1, argv2 };
-    TEXT::main(3, argv);
+    TEXT::text(3, argv);
 #else
     exportAs("TXT");
 #endif
