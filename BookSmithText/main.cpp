@@ -113,15 +113,9 @@ namespace TEXT {
     }
 }
 
-#ifdef Q_OS_MACOS
 namespace TEXT {
 int text(int argc, char *argv[])
 {
-#else
-int main(int argc, char *argv[])
-{
-    QApplication a(argc, argv);
-#endif
 
     if (argc != 3) return -1;
 
@@ -136,6 +130,4 @@ int main(int argc, char *argv[])
 
     return 0;
 }
-#ifdef Q_OS_MACOS
 }
-#endif

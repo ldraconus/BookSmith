@@ -150,15 +150,9 @@ namespace PDF {
     }
 }
 
-#ifdef Q_OS_MACOS
 namespace PDF {
 int pdf(int argc, char *argv[])
 {
-#else
-int main(int argc, char *argv[])
-{
-    QApplication a(argc, argv);
-#endif
     if (argc != 3) return -1;
     if (!PDF::open(argv[1])) return -1;
 
@@ -173,6 +167,4 @@ int main(int argc, char *argv[])
 
     return 0;
 }
-#ifdef Q_OS_MACOS
 }
-#endif

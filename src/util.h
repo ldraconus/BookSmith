@@ -9,13 +9,6 @@ class Util
 public:
     Util(MainWindow::Dialog& ok, MainWindow::Dialog& okcancel, MainWindow::Dialog& yesno, MainWindow::Dialog& yesnocancel, MainWindow::Dialog& question, MainWindow::Dialog& statement);
 
-    static MainWindow::Dialog* _ok;
-    static MainWindow::Dialog* _okcancel;
-    static MainWindow::Dialog* _yesno;
-    static MainWindow::Dialog* _yesnocancel;
-    static MainWindow::Dialog* _question;
-    static MainWindow::Dialog* _statement;
-
     static int YesNo(const char* question, const char* title = nullptr);
     static int YesNoCancel(const char* question, const char* title = nullptr);
     static int OK(const char* question, const char* title = nullptr);

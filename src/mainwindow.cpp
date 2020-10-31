@@ -17,6 +17,8 @@
 #include <QToolBar>
 #include <QMimeData>
 #include <QImageReader>
+#include <QTextEdit>
+#include <QSplitter>
 
 MainWindow* MainWindow::_mainWindow = nullptr;
 
@@ -258,12 +260,6 @@ MainWindow::MainWindow(const QString& file, QWidget *parent) :
 
     _exeDir = QFileInfo(QCoreApplication::applicationFilePath()).absolutePath();
     _baseDir = _exeDir;
-
-#ifdef Q_OS_MACOS
-    // take three dirs off _exeDir
-    int pos;
-    for (int i = 0; i < 3 && (pos = _baseDir.lastIndexOf("/")) != -1; ++i) _baseDir = _baseDir.left(pos);
-#endif
 
     QToolBar* toolbar = findChild<QToolBar*>("mainToolBar");
     createToolBarItem(toolbar, _baseDir + "/gfx/blank-file-16.ico",                      "New",        "New Book (Ctrl-N)",       SIGNAL(triggered()), SLOT(newAction()));
@@ -739,7 +735,6 @@ void MainWindow::editShowAction()
     outdentAction->setEnabled(blk.indent() != 0);
 }
 
-#ifdef Q_OS_MACOS
 #include "../BookSmithEPUB/main.cpp"
 
 static QString buildExportName(QString ext)
@@ -751,11 +746,9 @@ static QString buildExportName(QString ext)
     QString file = MainWindow::getMainWindow()->Dir() + "/" + MainWindow::getMainWindow()->Scenes()[idx]._name;
     return file + ext;
 }
-#endif
 
 void MainWindow::epubAction()
 {
-#ifdef Q_OS_MACOS
     std::string x = buildExportName(".novel").toStdString();
     char* argv1 = (char*) x.c_str();
     std::string y = buildExportName(".epub").toStdString();
@@ -764,9 +757,7 @@ void MainWindow::epubAction()
     char* name = (char*) n.c_str();
     char* argv[3] = { name, argv1, argv2 };
     EPUB::epub(3, &argv[0]);
-#else
     exportAs("EPUB");
-#endif
 }
 
 void MainWindow::fileShowAction()
@@ -1105,6 +1096,7 @@ static QString slashToBackslash(QString file)
     result += file;
     return result;
 }
+#endif
 
 void MainWindow::exportAs(QString type)
 {
@@ -1128,15 +1120,11 @@ void MainWindow::exportAs(QString type)
 
     if (system(command.toStdString().c_str()) < 0) Util::OK("Unable to export as " + type + ".\nMaybe reinstall BookSmith?");
 }
-#endif
 
-#ifdef Q_OS_MACOS
 #include "../BookSmithODF/main.cpp"
-#endif
 
 void MainWindow::odfAction()
 {
-#ifdef Q_OS_MACOS
     std::string x = buildExportName(".novel").toStdString();
     char* argv1 = (char*) x.c_str();
     std::string y = buildExportName(".odf").toStdString();
@@ -1145,9 +1133,6 @@ void MainWindow::odfAction()
     char* name = (char*) n.c_str();
     char* argv[3] = { name, argv1, argv2 };
     ODF::odf(3, argv);
-#else
-    exportAs("ODT");
-#endif
 }
 
 void MainWindow::outdentAction()
@@ -1179,13 +1164,10 @@ void MainWindow::pasteAction()
     }
 }
 
-#ifdef Q_OS_MACOS
 #include "../BookSmithPDF/src/main.cpp"
-#endif
 
 void MainWindow::pdfAction()
 {
-#ifdef Q_OS_MACOS
     std::string x = buildExportName(".novel").toStdString();
     char* argv1 = (char*) x.c_str();
     std::string y = buildExportName(".pdf").toStdString();
@@ -1194,9 +1176,6 @@ void MainWindow::pdfAction()
     char* name = (char*) n.c_str();
     char* argv[3] = { name, argv1, argv2 };
     PDF::pdf(3, argv);
-#else
-    exportAs("PDF");
-#endif
 }
 
 void MainWindow::replaceAction()
@@ -1331,13 +1310,10 @@ void MainWindow::sceneShowAction()
     moveOutAction->setEnabled(parent != nullptr && parent->parent() != nullptr);
 }
 
-#ifdef Q_OS_MACOS
 #include "../BookSmithText/main.cpp"
-#endif
 
 void MainWindow::textAction()
 {
-#ifdef Q_OS_MACOS
     std::string x = buildExportName(".novel").toStdString();
     char* argv1 = (char*) x.c_str();
     std::string y = buildExportName(".txt").toStdString();
@@ -1346,9 +1322,6 @@ void MainWindow::textAction()
     char* name = (char*) n.c_str();
     char* argv[3] = { name, argv1, argv2 };
     TEXT::text(3, argv);
-#else
-    exportAs("TXT");
-#endif
 }
 
 static int countWords(QString x)

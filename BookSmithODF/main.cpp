@@ -148,15 +148,9 @@ namespace ODF {
     }
 }
 
-#ifdef Q_OS_MACOS
 namespace ODF {
 int odf(int argc, char *argv[])
 {
-#else
-    int main(int argc, char *argv[])
-    {
-        QApplication a(argc, argv);
-#endif
         if (argc != 3) return -1;
 
         if (!ODF::open(argv[1])) return -1;
@@ -170,6 +164,4 @@ int odf(int argc, char *argv[])
 
         return 0;
     }
-#ifdef Q_OS_MACOS
 }
-#endif
